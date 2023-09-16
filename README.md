@@ -12,7 +12,18 @@ Great thanks to [TimeNet repo](https://github.com/thuml/Time-Series-Library/tree
 # Contents
 - [Installation](#Installation)
 - [How to run](#Run)
-- [Outstanding issues](#Outstanding issues)
+
+# The directory structure of the code
+```shell
+.
+├── ckpts            # Models will be saved here during training.
+├── data             # Benchmark dataset.
+├── layer            # This code closely resembles mindspore.nn.layer, with only a very limited number of functions being modified.             		
+│   ├── dataset_MindSpore.py            # Dataloader.
+│   ├── timefeatures.py                 # Preprocess data, which will be called by the dataloader.
+│   ├── exp.py                          # Main function 
+└── README.md
+```
 
 # Installation
 For now, we only support CPU version MindSpore. We are executing the code using Python 3.8 on a Windows x64 platform. You can refer to [here](https://www.mindspore.cn/install). run:
