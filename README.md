@@ -1,1 +1,50 @@
-# anonymous-great-project
+This is just a temporary version. This Time-series Prediction Benchmark is under the leadership of Professor Lei CHEN.
+Great thanks to [TimeNet repo](https://github.com/thuml/Time-Series-Library/tree/main).
+
+🎉 **NEWS**: 
+- 2023-09-15 Support [Reformer](https://github.com/thuml/Time-Series-Library/blob/main/models/Transformer.py).
+- 2023-09-02 Support [Transformer](https://github.com/thuml/Time-Series-Library/blob/main/models/Reformer.py).
+- 2023-08-27 Finished Dataloader
+
+
+
+
+# Contents
+- [Installation](#Installation)
+- [How to run](#Run)
+- [Outstanding issues](#Outstanding issues)
+
+# Installation
+For now, we only support CPU version MindSpore. We are executing the code using Python 3.8 on a Windows x64 platform. You can refer to [here](https://www.mindspore.cn/install). run:
+```bash
+pip install https://ms-release.obs.cn-north-4.myhuaweicloud.com/2.1.1/MindSpore/cpu/x86_64/mindspore-2.1.1-cp38-cp38-win_amd64.whl --trusted-host ms-release.obs.cn-north-4.myhuaweicloud.com -i https://pypi.tuna.tsinghua.edu.cn/simple
+```
+
+# Run
+## 1.Transformer experiments
+```shell
+python exp.py  \
+    --model 'Transformer' \
+    --train_epoch 10
+```
+
+## 2.Reformer experiments
+```shell
+python exp.py  \
+    --model 'Reformer' \
+    --train_epoch 10
+```
+
+Other parameters
+- ``patience``: For early stop.
+- ``batch_size``: Batch_size.
+- ``learning_rate``: Learning rate of the optimizer.
+- ``features``: Forecasting task, options:[M, S, MS]; M:multivariate predict multivariate, S:univariate predict univariate, MS:multivariate predict univariate.
+- ``enc_in``: Encoder input size.
+- ``dec_in``: Decoder input size.
+- ``c_out``: Output size.
+- ``dropout``: Dropout rate.
+
+# Outstanding issues
+- For Reformer, there is no CPU-based Mindspore equivalent of the PyTorch torch.einsum() function. Consequently, we continue to utilize the PyTorch version of this function in our code for its superior performance. If you prefer not to use PyTorch, we also offer our own custom time-inefficient function, which can be found in the commented-out code at the same location.
+- For now, we only provide long-term-forcast-task. We will support short-term-forcast-term in the future.
