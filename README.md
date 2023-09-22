@@ -2,6 +2,7 @@ This is just a temporary version. This Time-series Prediction Benchmark is under
 Great thanks to [TimeNet repo](https://github.com/thuml/Time-Series-Library/tree/main).
 
 🎉 **NEWS**: 
+- 2023-09-22 Support [Informer](https://github.com/thuml/Time-Series-Library/blob/main/models/Informer.py).
 - 2023-09-15 Support [Reformer](https://github.com/thuml/Time-Series-Library/blob/main/models/Transformer.py).
 - 2023-09-02 Support [Transformer](https://github.com/thuml/Time-Series-Library/blob/main/models/Reformer.py).
 - 2023-08-27 Finished Dataloader
@@ -32,21 +33,16 @@ pip install https://ms-release.obs.cn-north-4.myhuaweicloud.com/2.1.1/MindSpore/
 ```
 
 # Run
-## 1.Transformer experiments
 ```shell
 python exp.py  \
     --model 'Transformer' \
     --train_epoch 10
 ```
 
-## 2.Reformer experiments
-```shell
-python exp.py  \
-    --model 'Reformer' \
-    --train_epoch 10
-```
+
 
 Other parameters
+- ``model``: Could choose from ['Transformer', 'Informer', 'Reformer'].
 - ``patience``: For early stop.
 - ``batch_size``: Batch_size.
 - ``learning_rate``: Learning rate of the optimizer.
