@@ -354,7 +354,6 @@ class LSHAttention(Cell):
 
         # ticker = torch.arange(total_hashes * seqlen, device=device).unsqueeze(0).expand_as(buckets)
         a = ops.arange(total_hashes * seqlen)
-
         ticker = ops.ExpandDims()(a, 0)
 
         t4 = time.time()

@@ -195,6 +195,8 @@ class MultiheadAttention(Cell):
     def construct(self, query: Tensor, key: Tensor, value: Tensor, attn_mask: Optional[Tensor] = None,
                   key_padding_mask: Optional[Tensor] = None, need_weights: bool = True,  average_attn_weights: bool = True,
                   is_causal: bool = False):
+        print('query.shape', query.shape)
+        print('key.shape',key.shape)
         is_batched = query.ndim == 3
         if key_padding_mask is not None:
             _kpm_dtype = key_padding_mask.dtype
@@ -304,6 +306,7 @@ class TransformerEncoderLayer(Cell):
                  activation: Union[str, Cell, callable] = 'relu', layer_norm_eps: float = 1e-5,
                  batch_first: bool = False, norm_first: bool = False, Attn_func = None):
         super().__init__()
+
         # self.self_attn = MultiheadAttention(d_model, nhead, dropout=dropout, batch_first=batch_first)
         self.self_attn = Attn_func
         # feedforward layer
