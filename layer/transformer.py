@@ -195,8 +195,6 @@ class MultiheadAttention(Cell):
     def construct(self, query: Tensor, key: Tensor, value: Tensor, attn_mask: Optional[Tensor] = None,
                   key_padding_mask: Optional[Tensor] = None, need_weights: bool = True,  average_attn_weights: bool = True,
                   is_causal: bool = False):
-        print('query.shape', query.shape)
-        print('key.shape',key.shape)
         is_batched = query.ndim == 3
         if key_padding_mask is not None:
             _kpm_dtype = key_padding_mask.dtype

@@ -4,6 +4,7 @@ from dataset_MindSpore import data_provider
 from layer.transformer import Transformer
 from model.reformer import Reformer
 from model.informer import Informer
+from model.pyraformer import Pyraformer
 from mindspore import ops
 from mindspore import nn
 from mindspore import value_and_grad
@@ -14,8 +15,8 @@ import time
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Transformer')
-    parser.add_argument('--model', type=str, default='Informer',
-                        help='model name, options: [Reformer, Transformer, Informer]')
+    parser.add_argument('--model', type=str, default='Pyraformer',
+                        help='model name, options: [Reformer, Transformer, Informer, Pyraformer]')
     parser.add_argument('--patience', type=int, default=50, help='early stop')
     parser.add_argument('--embed', type=str, default='timeF',
                         help='time features encoding, options:[timeF, fixed, learned]')
@@ -120,6 +121,8 @@ if __name__ == '__main__':
                            embed = args.embed, freq = args.freq, dec_in = args.dec_in, batch_first=True, c_out=args.c_out)
     elif args.model == 'Informer':
         model = Informer(args = args, batch_first=True)
+    elif args.model == 'Pyraformer':
+        model = Pyraformer(args = args)
     display_params(model)
 
     def vali(vali_loader, model):
