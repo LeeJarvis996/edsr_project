@@ -2,6 +2,7 @@ This is just a temporary version. This Time-series Prediction Benchmark is under
 Great thanks to [TimeNet repo](https://github.com/thuml/Time-Series-Library/tree/main).
 
 🎉 **NEWS**: 
+- 2023-09-23 Support [Pyraformer](https://github.com/thuml/Time-Series-Library/blob/main/models/Pyraformer.py).
 - 2023-09-22 Support [Informer](https://github.com/thuml/Time-Series-Library/blob/main/models/Informer.py).
 - 2023-09-15 Support [Reformer](https://github.com/thuml/Time-Series-Library/blob/main/models/Transformer.py).
 - 2023-09-02 Support [Transformer](https://github.com/thuml/Time-Series-Library/blob/main/models/Reformer.py).
