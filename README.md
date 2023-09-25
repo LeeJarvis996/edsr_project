@@ -44,7 +44,7 @@ python exp.py  \
 
 
 Other parameters
-- ``model``: Could choose from ['Transformer', 'Informer', 'Reformer'].
+- ``model``: Could choose from ['Transformer', 'Informer', 'Reformer', 'Pyraformer', 'Autoformer'].
 - ``patience``: For early stop.
 - ``batch_size``: Batch_size.
 - ``learning_rate``: Learning rate of the optimizer.
