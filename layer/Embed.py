@@ -30,8 +30,7 @@ class TokenEmbedding(Cell):
         # print("x.transpose(0, 2, 1)",x.transpose(0, 2, 1).shape)
         # print("self.tokenConv(x.transpose(0, 2, 1)).transpose(1, 2)", self.tokenConv(x.transpose(0, 2, 1)).transpose(0, 2, 1).shape)
         # x = self.tokenConv(x.permute(0, 2, 1)).transpose(1, 2)
-        x = self.tokenConv(x.transpose(0, 2, 1)).transpose(0, 2, 1)
-        # print("Token_x",x.shape)
+        x = self.tokenConv(x.transpose(0, 2, 1).astype('Float32')).transpose(0, 2, 1)
         return x
 
 class PositionalEmbedding(Cell):
@@ -87,7 +86,7 @@ class TimeFeatureEmbedding(Cell):
 
     def construct(self, x):
         # print("self.embed(x)",self.embed(x).shape)
-        return self.embed(x)
+        return self.embed(x.astype(mindspore.float32))
 
 class DataEmbedding(Cell):
     def __init__(self, c_in, d_model, embed_type='fixed', freq='h', dropout=0.1):
@@ -108,4 +107,20 @@ class DataEmbedding(Cell):
         else:
             x = self.value_embedding(
                 x) + self.temporal_embedding(x_mark) + self.position_embedding(x)
+        return self.dropout(x)
+
+
+class DataEmbedding_wo_pos(Cell):
+    def __init__(self, c_in, d_model, embed_type='fixed', freq='h', dropout=0.1):
+        super(DataEmbedding_wo_pos, self).__init__()
+
+        self.value_embedding = TokenEmbedding(c_in=c_in, d_model=d_model)
+        self.position_embedding = PositionalEmbedding(d_model=d_model)
+        self.temporal_embedding = TimeFeatureEmbedding(d_model=d_model, embed_type=embed_type, freq=freq)
+        self.dropout = Dropout(p=dropout)
+    def construct(self, x, x_mark):
+        if x_mark is None:
+            x = self.value_embedding(x)
+        else:
+            x = self.value_embedding(x) + self.temporal_embedding(x_mark)
         return self.dropout(x)

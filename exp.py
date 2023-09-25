@@ -5,6 +5,7 @@ from layer.transformer import Transformer
 from model.reformer import Reformer
 from model.informer import Informer
 from model.pyraformer import Pyraformer
+from model.autoformer import Autoformer
 from mindspore import ops
 from mindspore import nn
 from mindspore import value_and_grad
@@ -15,8 +16,8 @@ import time
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Transformer')
-    parser.add_argument('--model', type=str, default='Pyraformer',
-                        help='model name, options: [Reformer, Transformer, Informer, Pyraformer]')
+    parser.add_argument('--model', type=str, default='Autoformer',
+                        help='model name, options: [Reformer, Transformer, Informer, Pyraformer, Autoformer]')
     parser.add_argument('--patience', type=int, default=50, help='early stop')
     parser.add_argument('--embed', type=str, default='timeF',
                         help='time features encoding, options:[timeF, fixed, learned]')
@@ -123,6 +124,9 @@ if __name__ == '__main__':
         model = Informer(args = args, batch_first=True)
     elif args.model == 'Pyraformer':
         model = Pyraformer(args = args)
+    elif args.model == 'Autoformer':
+        model = Autoformer(configs = args)
+
     display_params(model)
 
     def vali(vali_loader, model):
@@ -154,7 +158,6 @@ if __name__ == '__main__':
         train_loss = []
         epoch_time = time.time()
         for iter, (batch_x, batch_y, batch_x_mark, batch_y_mark) in enumerate(train_loader):
-            # if iter >= 5: break
             dec_inp = ops.zeros_like(batch_y[:, -args.pred_len:, :], dtype=mindspore.float64)
             dec_inp = mindspore.ops.cat([batch_y[:, :args.label_len, :], dec_inp], axis=1)
 
