@@ -55,6 +55,9 @@ Other parameters
 - ``dropout``: Dropout rate.
 
 # Outstanding issues
-- For Reformer, there is no CPU-based Mindspore equivalent of the PyTorch torch.einsum() function. Consequently, we continue to utilize the PyTorch version of this function in our code for its superior performance. If you prefer not to use PyTorch, we also offer our own custom time-inefficient function, which can be found in the commented-out code at the same location.
-- For Autoformer, ops.roll does not support CPU, and therefore we use the numpy instead.
+- For Reformer, there is no CPU-based Mindspore equivalent of the PyTorch torch.einsum() function. Consequently, we continue to utilize the PyTorch version of this function in our code for its superior performance.(layers/reformer_attn.py) If you prefer not to use PyTorch, we also offer our own custom time-inefficient function, which can be found in the commented-out code at the same location.
+- For Autoformer, ops.roll does not support CPU, and therefore we use the numpy instead.(layers/autoformer_attn.py)
+- For ETSformer,
+    - since the gradient is not supported for complex type multiplication currently, we have to do multiplication with nd.array format.(layers/autoformer_attn.py, layers/etsformer_attn.py)
+    - since the mindspore.ops.FFTWithSize is not same as the torch.rfft/irfft, we use numpy instead.(layers/etsformer_attn.py)
 - For now, we only provide long-term-forcast-task. We will support short-term-forcast-term in the future.
