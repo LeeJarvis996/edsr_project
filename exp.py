@@ -6,6 +6,7 @@ from model.reformer import Reformer
 from model.informer import Informer
 from model.pyraformer import Pyraformer
 from model.autoformer import Autoformer
+from model.etsformer import Etsformer
 from mindspore import ops
 from mindspore import nn
 from mindspore import value_and_grad
@@ -16,8 +17,8 @@ import time
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Transformer')
-    parser.add_argument('--model', type=str, default='Autoformer',
-                        help='model name, options: [Reformer, Transformer, Informer, Pyraformer, Autoformer]')
+    parser.add_argument('--model', type=str, default='Etsformer',
+                        help='model name, options: [Reformer, Transformer, Informer, Pyraformer, Autoformer, Etsformer]')
     parser.add_argument('--patience', type=int, default=50, help='early stop')
     parser.add_argument('--embed', type=str, default='timeF',
                         help='time features encoding, options:[timeF, fixed, learned]')
@@ -52,7 +53,7 @@ if __name__ == '__main__':
     parser.add_argument('--c_out', type=int, default=7, help='output size')
     parser.add_argument('--d_model', type=int, default=512, help='dimension of model')
     parser.add_argument('--n_heads', type=int, default=8, help='num of heads')
-    parser.add_argument('--e_layers', type=int, default=2, help='num of encoder layers')
+    parser.add_argument('--e_layers', type=int, default=1, help='num of encoder layers')
     parser.add_argument('--d_layers', type=int, default=1, help='num of decoder layers')
     parser.add_argument('--d_ff', type=int, default=2048, help='dimension of fcn')
     parser.add_argument('--moving_avg', type=int, default=25, help='window size of moving average')
@@ -60,7 +61,7 @@ if __name__ == '__main__':
     parser.add_argument('--distil', action='store_false',
                         help='whether to use distilling in encoder, using this argument means not using distilling',
                         default=True)
-    parser.add_argument('--train_epochs', type=int, default=1, help='train epochs')
+    parser.add_argument('--train_epochs', type=int, default=10, help='train epochs')
     parser.add_argument('--dropout', type=float, default=0.1, help='dropout')
     parser.add_argument('--activation', type=str, default='gelu', help='activation')
     parser.add_argument('--output_attention', action='store_true', help='whether to output attention in ecoder')
@@ -126,6 +127,8 @@ if __name__ == '__main__':
         model = Pyraformer(args = args)
     elif args.model == 'Autoformer':
         model = Autoformer(configs = args)
+    elif args.model == 'Etsformer':
+        model = Etsformer(configs=args)
 
     display_params(model)
 

@@ -133,7 +133,7 @@ class AutoCorrelation(Cell):
             #              (tmp_corr[:, i].unsqueeze(1).unsqueeze(1).unsqueeze(1).repeat(1, head, channel, length))
             '''
             pattern = ops.roll(tmp_values, -int(index[i]), -1)
-            Unsupported op [Roll] on CPU
+            Unsupported op [Roll] on CPU -> we use np.roll instead.
             '''
             pattern = Tensor(np.roll(tmp_values.asnumpy(), shift=-int(index[i]),axis=-1))
             a = mindspore.numpy.tile(ops.ExpandDims()(ops.ExpandDims()(ops.ExpandDims()(tmp_corr[:, i],1),1),1), (1, head, channel, length))
@@ -242,6 +242,8 @@ class AutoCorrelation(Cell):
         res = q_fft * ops.conj(k_fft)
         TypeError: For 'Mul', gradient not support for complex type currently.
         For now, we must transform mindspore.Tensor -> numpy to do calculation.
+        If gradient support is added in the future, please use this code:
+        # res = q_fft * ops.conj(k_fft)
         '''
         res = q_fft.asnumpy() * ops.conj(k_fft).asnumpy()
         # print("res", res.shape)

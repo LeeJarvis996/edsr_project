@@ -355,9 +355,6 @@ class LSHAttention(Cell):
         # ticker = torch.arange(total_hashes * seqlen, device=device).unsqueeze(0).expand_as(buckets)
         a = ops.arange(total_hashes * seqlen)
         ticker = ops.ExpandDims()(a, 0)
-
-        t4 = time.time()
-        # ticker = expand_as(ticker, buckets)
         ticker = ticker.expand_as(buckets)
 
 
@@ -736,3 +733,5 @@ class LSHSelfAttention(Cell):
         out = split_heads(out).view(b, t, -1)
         out = self.to_out(out)
         return self.post_attn_dropout(out)
+
+
