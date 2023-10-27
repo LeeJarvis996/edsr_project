@@ -1,5 +1,5 @@
 This is just a temporary version. This Time-series Prediction Benchmark is under the leadership of Professor Lei CHEN.
-Great thanks to [TimeNet repo](https://github.com/thuml/Time-Series-Library/tree/main).
+Great thanks to [TSlib](https://github.com/thuml/Time-Series-Library/tree/main).
 
 🎉 **NEWS**: 
 - 2023-10-27 Support the Short-term-forcasting task.
