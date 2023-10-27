@@ -1,19 +1,9 @@
 import sys
 sys.path.append("..")
-import copy
-import math
-from typing import Union, Optional
 import mindspore
 import mindspore.ops as ops
-from mindspore.common.tensor import Tensor
-from mindspore.common.parameter import Parameter
-from mindspore.common.initializer import initializer, XavierNormal, XavierUniform, \
-    HeUniform, Uniform, _calculate_fan_in_and_fan_out
 from mindspore.nn.cell import Cell
 from layer.basic import _Linear, Dropout
-from layer.activation import ReLU, GELU
-from layer.normalization import LayerNorm
-from layer.container import CellList
 from layer.Embed import DataEmbedding
 from layer.basic import _Linear
 from layer.etsformer_attn import Transform, GrowthLayer, FourierLayer, LevelLayer, Feedforward, DampingLayer
@@ -131,40 +121,40 @@ class Etsformer(Cell):
     Paper link: https://arxiv.org/abs/2202.01381
     """
 
-    def __init__(self, configs):
+    def __init__(self, args):
         super(Etsformer, self).__init__()
-        self.task_name = configs.task_name
-        self.seq_len = configs.seq_len
-        self.label_len = configs.label_len
+        self.task_name = args.task_name
+        self.seq_len = args.seq_len
+        self.label_len = args.label_len
         if self.task_name == 'classification' or self.task_name == 'anomaly_detection' or self.task_name == 'imputation':
-            self.pred_len = configs.seq_len
+            self.pred_len = args.seq_len
         else:
-            self.pred_len = configs.pred_len
+            self.pred_len = args.pred_len
 
-        assert configs.e_layers == configs.d_layers, "Encoder and decoder layers must be equal"
+        assert args.e_layers == args.d_layers, "Encoder and decoder layers must be equal"
 
         # Embedding
-        self.enc_embedding = DataEmbedding(configs.enc_in, configs.d_model, configs.embed, configs.freq,
-                                           configs.dropout)
+        self.enc_embedding = DataEmbedding(args.enc_in, args.d_model, args.embed, args.freq,
+                                           args.dropout)
 
         # Encoder
         self.encoder = Encoder(
             [
                 EncoderLayer(
-                    configs.d_model, configs.n_heads, configs.enc_in, configs.seq_len, self.pred_len, configs.top_k,
-                    dim_feedforward=configs.d_ff,
-                    dropout=configs.dropout,
-                    activation=configs.activation,
-                ) for _ in range(configs.e_layers)
+                    args.d_model, args.n_heads, args.enc_in, args.seq_len, self.pred_len, args.top_k,
+                    dim_feedforward=args.d_ff,
+                    dropout=args.dropout,
+                    activation=args.activation,
+                ) for _ in range(args.e_layers)
             ]
         )
         # Decoder
         self.decoder = Decoder(
             [
                 DecoderLayer(
-                    configs.d_model, configs.n_heads, configs.c_out, self.pred_len,
-                    dropout=configs.dropout,
-                ) for _ in range(configs.d_layers)
+                    args.d_model, args.n_heads, args.c_out, self.pred_len,
+                    dropout=args.dropout,
+                ) for _ in range(args.d_layers)
             ],
         )
         self.transform = Transform(sigma=0.2)
@@ -172,8 +162,8 @@ class Etsformer(Cell):
         if self.task_name == 'classification':
             # self.act = torch.nn.functional.gelu
             self.act= ops.gelu
-            self.dropout = Dropout(p = configs.dropout)
-            self.projection = _Linear(configs.d_model * configs.seq_len, configs.num_class)
+            self.dropout = Dropout(p = args.dropout)
+            self.projection = _Linear(args.d_model * args.seq_len, args.num_class)
 
     def forecast(self, x_enc, x_mark_enc, x_dec, x_mark_dec):
         if self.training:

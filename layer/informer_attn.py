@@ -1,3 +1,5 @@
+import sys
+sys.path.append("..")
 from typing import Union, Optional
 import mindspore
 import mindspore.ops as ops
@@ -12,7 +14,7 @@ from .activation import ReLU, GELU
 from .normalization import LayerNorm
 from .container import CellList
 from .Embed import DataEmbedding
-from .transformer import TransformerEncoder, TransformerEncoderLayer
+from model.transformer import TransformerEncoder, TransformerEncoderLayer
 from .basic import _Linear
 from .reformer_attn import LSHSelfAttention
 import time

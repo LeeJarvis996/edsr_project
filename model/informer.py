@@ -4,10 +4,8 @@ from typing import Union, Optional
 import mindspore
 import mindspore.ops as ops
 from mindspore.common.tensor import Tensor
-from mindspore.common.parameter import Parameter
 from mindspore.common.initializer import initializer, XavierNormal, XavierUniform, \
     HeUniform, Uniform, _calculate_fan_in_and_fan_out
-from mindspore.ops.function.nn_func import multi_head_attention_forward
 from mindspore.nn.cell import Cell
 from layer.basic import _Linear, Dropout
 from layer.activation import ReLU, GELU
@@ -15,9 +13,8 @@ from layer.normalization import LayerNorm
 from layer.container import CellList
 from layer.Embed import DataEmbedding
 from layer.basic import _Linear
+from mindspore import Parameter
 from layer.informer_attn import ProbAttention
-from layer.reformer_attn import LSHSelfAttention
-import time
 import copy
 
 
@@ -278,7 +275,7 @@ class Informer(Cell):
     Reformer with O(LlogL) complexity
     Paper link: https://openreview.net/forum?id=rkgNKkHtvB
     """
-    def __init__(self, args, layer_norm_eps: float = 1e-5, batch_first: bool = False, norm_first: bool = False):
+    def __init__(self, args, layer_norm_eps: float = 1e-5, batch_first: bool = True, norm_first: bool = False):
         super(Informer, self).__init__()
 
         self.task_name = args.task_name
@@ -321,25 +318,41 @@ class Informer(Cell):
                   tgt_mask: Optional[Tensor] = None,
                   memory_mask: Optional[Tensor] = None, src_key_padding_mask: Optional[Tensor] = None,
                   tgt_key_padding_mask: Optional[Tensor] = None, memory_key_padding_mask: Optional[Tensor] = None):
-        is_batched = src.ndim == 3
-        if self.batch_first:
-            src_batch_size = src.shape[0]
-            tgt_batch_size = src.shape[0]
-        else:
-            src_batch_size = src.shape[1]
-            tgt_batch_size = src.shape[1]
-        if src_batch_size != tgt_batch_size and is_batched:
-            raise ValueError("The number of batch size for 'src' and 'tgt' must be equal.")
-        src = self.enc_embedding(src, src_mark)
-        tgt = self.dec_embedding(tgt, tgt_mark)
-        # print("encoder")
-        memory = self.encoder(src, src_mask=src_mask, src_key_padding_mask=src_key_padding_mask, is_causal=False)
+        if self.task_name == 'long_term_forecast':
+            is_batched = src.ndim == 3
+            if self.batch_first:
+                src_batch_size = src.shape[0]
+                tgt_batch_size = src.shape[0]
+            else:
+                src_batch_size = src.shape[1]
+                tgt_batch_size = src.shape[1]
+            if src_batch_size != tgt_batch_size and is_batched:
+                raise ValueError("The number of batch size for 'src' and 'tgt' must be equal.")
+            src = self.enc_embedding(src, src_mark)
+            tgt = self.dec_embedding(tgt, tgt_mark)
+            # print("encoder")
+            memory = self.encoder(src, src_mask=src_mask, src_key_padding_mask=src_key_padding_mask, is_causal=False)
 
-        # # print("decoder")
-        output = self.decoder(tgt, memory, tgt_mask=tgt_mask, memory_mask=memory_mask,
-                              tgt_key_padding_mask=tgt_key_padding_mask, is_causal=True,
-                              memory_key_padding_mask=memory_key_padding_mask)
-        return output
+            # # print("decoder")
+            output = self.decoder(tgt, memory, tgt_mask=tgt_mask, memory_mask=memory_mask,
+                                  tgt_key_padding_mask=tgt_key_padding_mask, is_causal=True,
+                                  memory_key_padding_mask=memory_key_padding_mask)
+        elif self.task_name == 'short_term_forecast':
+            mean_src = Parameter(src.mean(axis=1, keep_dims=True), requires_grad=False)
+            src = src - mean_src
+            std_src = Parameter(ops.sqrt(ops.var(src.astype(mindspore.float32), axis=1, keepdims=True, ddof=False) + 1e-5),
+                                requires_grad=False)
+            src = src / std_src
+            src = self.enc_embedding(src, src_mark)
+            tgt = self.dec_embedding(tgt, tgt_mark)
+            memory = self.encoder(src, src_mask=src_mask, src_key_padding_mask=src_key_padding_mask, is_causal=False)
+            output = self.decoder(tgt, memory, tgt_mask=tgt_mask, memory_mask=memory_mask,
+                                  tgt_key_padding_mask=tgt_key_padding_mask, is_causal=True,
+                                  memory_key_padding_mask=memory_key_padding_mask)
+            output = output * std_src + mean_src
+        else:
+            return None
+        return output[:, -self.pred_len:, :]
 
 
 def _get_activation_fn(activation: str):

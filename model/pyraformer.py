@@ -93,11 +93,25 @@ class Pyraformer(Cell):
             enc_out.shape[0], self.pred_len, -1)
         return dec_out
 
+    def short_forecast(self, x_enc, x_mark_enc, x_dec, x_mark_dec, mask=None):
+        # Normalization
+        mean_enc = Parameter(x_enc.mean(axis=1, keep_dims=True), requires_grad=False)  # B x 1 x E
+        x_enc = x_enc - mean_enc
+        std_enc = Parameter(ops.sqrt(ops.var(x_enc.astype(mindspore.float32), axis=1, keepdims=True, ddof=False) + 1e-5), requires_grad=False)  # B x 1 x E
+        x_enc = x_enc / std_enc
+        enc_out = self.encoder(x_enc, x_mark_enc)[:, -1, :]
+        dec_out = self.projection(enc_out).view(
+            enc_out.shape[0], self.pred_len, -1)
 
+        dec_out = dec_out * std_enc + mean_enc
+        return dec_out
 
     def construct(self, src, src_mark, tgt, tgt_mark, mask=None):
         if self.task_name == 'long_term_forecast':
             dec_out = self.long_forecast(src, src_mark, tgt, tgt_mark)
+            return dec_out[:, -self.pred_len:, :]  # [B, L, D]
+        elif self.task_name == 'short_term_forecast':
+            dec_out = self.short_forecast(src, src_mark, tgt, tgt_mark)
             return dec_out[:, -self.pred_len:, :]  # [B, L, D]
         return None
 

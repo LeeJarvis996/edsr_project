@@ -11,6 +11,7 @@ from mindspore import Parameter
 from .basic import _Linear
 import mindspore
 from mindspore import Tensor
+import mindspore.ops as ops
 
 class TokenEmbedding(Cell):
     def __init__(self, c_in, d_model):
@@ -100,11 +101,11 @@ class DataEmbedding(Cell):
     def construct(self, x, x_mark):
         # print("x", type(x))
         x = x.astype(mindspore.float32)
-        x_mark = x_mark.astype(mindspore.float32)
         # print(x.dtype)
         if x_mark is None:
             x = self.value_embedding(x) + self.position_embedding(x)
         else:
+            x_mark = x_mark.astype(mindspore.float32)
             x = self.value_embedding(
                 x) + self.temporal_embedding(x_mark) + self.position_embedding(x)
         return self.dropout(x)
@@ -124,3 +125,34 @@ class DataEmbedding_wo_pos(Cell):
         else:
             x = self.value_embedding(x) + self.temporal_embedding(x_mark)
         return self.dropout(x)
+
+
+class PatchEmbedding(Cell):
+    def __init__(self, d_model, patch_len, stride, padding, dropout):
+        super(PatchEmbedding, self).__init__()
+        # Patching
+        self.patch_len = patch_len
+        self.stride = stride
+        # self.padding_patch_layer = nn.ReplicationPad1d((0, padding))
+        self.padding_patch_layer = mindspore.nn.ReplicationPad1d((0, padding))
+
+        # Backbone, Input encoding: projection of feature vectors onto a d-dim vector space
+        # self.value_embedding = nn.Linear(patch_len, d_model, bias=False)
+        self.value_embedding = _Linear(patch_len, d_model, has_bias=False)
+
+        # Positional embedding
+        self.position_embedding = PositionalEmbedding(d_model)
+        # Residual dropout
+        # self.dropout = nn.Dropout(dropout)
+        self.dropout = Dropout(p=dropout)
+
+    def construct(self, x):
+        # do patching
+        n_vars = x.shape[1]
+        x = self.padding_patch_layer(x)
+        x = x.unfold(dimension=-1, size=self.patch_len, step=self.stride)
+        # x = torch.reshape(x, (x.shape[0] * x.shape[1], x.shape[2], x.shape[3]))
+        x = ops.reshape(x, (x.shape[0] * x.shape[1], x.shape[2], x.shape[3]))
+        # Input encoding
+        x = self.value_embedding(x) + self.position_embedding(x)
+        return self.dropout(x), n_vars

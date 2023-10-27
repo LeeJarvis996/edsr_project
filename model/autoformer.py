@@ -1,21 +1,10 @@
 import sys
 sys.path.append("..")
-import copy
-import math
-from typing import Union, Optional
 import mindspore
 import mindspore.ops as ops
-from mindspore.common.tensor import Tensor
-from mindspore.common.parameter import Parameter
-from mindspore.common.initializer import initializer, XavierNormal, XavierUniform, \
-    HeUniform, Uniform, _calculate_fan_in_and_fan_out
 from mindspore.nn.cell import Cell
 from layer.basic import _Linear, Dropout
-from layer.activation import ReLU, GELU
-from layer.normalization import LayerNorm
-from layer.container import CellList
 from layer.Embed import DataEmbedding_wo_pos
-from layer.basic import _Linear
 from layer.autoformer_attn import series_decomp, AutoCorrelationLayer, AutoCorrelation
 
 
@@ -162,64 +151,64 @@ class Autoformer(Cell):
     with inherent O(LlogL) complexity
     Paper link: https://openreview.net/pdf?id=I55UqU-M11y
     """
-    def __init__(self, configs):
+    def __init__(self, args):
         super(Autoformer, self).__init__()
-        self.task_name = configs.task_name
-        self.seq_len = configs.seq_len
-        self.label_len = configs.label_len
-        self.pred_len = configs.pred_len
-        self.output_attention = configs.output_attention
+        self.task_name = args.task_name
+        self.seq_len = args.seq_len
+        self.label_len = args.label_len
+        self.pred_len = args.pred_len
+        self.output_attention = args.output_attention
 
         # Decomp
-        kernel_size = configs.moving_avg
+        kernel_size = args.moving_avg
         self.decomp = series_decomp(kernel_size)
 
         # Embedding
-        self.enc_embedding = DataEmbedding_wo_pos(configs.enc_in, configs.d_model, configs.embed, configs.freq,
-                                                  configs.dropout)
+        self.enc_embedding = DataEmbedding_wo_pos(args.enc_in, args.d_model, args.embed, args.freq,
+                                                  args.dropout)
         # Encoder
         self.encoder = Encoder(
             [
                 EncoderLayer(
                     AutoCorrelationLayer(
-                        AutoCorrelation(False, configs.factor, attention_dropout=configs.dropout,
-                                        output_attention=configs.output_attention),
-                        configs.d_model, configs.n_heads),
-                    configs.d_model,
-                    configs.d_ff,
-                    moving_avg=configs.moving_avg,
-                    dropout=configs.dropout,
-                    activation=configs.activation
-                ) for l in range(configs.e_layers)
+                        AutoCorrelation(False, args.factor, attention_dropout=args.dropout,
+                                        output_attention=args.output_attention),
+                        args.d_model, args.n_heads),
+                    args.d_model,
+                    args.d_ff,
+                    moving_avg=args.moving_avg,
+                    dropout=args.dropout,
+                    activation=args.activation
+                ) for l in range(args.e_layers)
             ],
-            norm_layer = my_Layernorm(configs.d_model)
+            norm_layer = my_Layernorm(args.d_model)
         )
         # Decoder
         if self.task_name == 'long_term_forecast' or self.task_name == 'short_term_forecast':
-            self.dec_embedding = DataEmbedding_wo_pos(configs.dec_in, configs.d_model, configs.embed, configs.freq,
-                                                      configs.dropout)
+            self.dec_embedding = DataEmbedding_wo_pos(args.dec_in, args.d_model, args.embed, args.freq,
+                                                      args.dropout)
             self.decoder = Decoder(
                 [
                     DecoderLayer(
                         AutoCorrelationLayer(
-                            AutoCorrelation(True, configs.factor, attention_dropout=configs.dropout,
+                            AutoCorrelation(True, args.factor, attention_dropout=args.dropout,
                                             output_attention=False),
-                            configs.d_model, configs.n_heads),
+                            args.d_model, args.n_heads),
                         AutoCorrelationLayer(
-                            AutoCorrelation(False, configs.factor, attention_dropout=configs.dropout,
+                            AutoCorrelation(False, args.factor, attention_dropout=args.dropout,
                                             output_attention=False),
-                            configs.d_model, configs.n_heads),
-                        configs.d_model,
-                        configs.c_out,
-                        configs.d_ff,
-                        moving_avg=configs.moving_avg,
-                        dropout=configs.dropout,
-                        activation=configs.activation,
+                            args.d_model, args.n_heads),
+                        args.d_model,
+                        args.c_out,
+                        args.d_ff,
+                        moving_avg=args.moving_avg,
+                        dropout=args.dropout,
+                        activation=args.activation,
                     )
-                    for l in range(configs.d_layers)
+                    for l in range(args.d_layers)
                 ],
-                norm_layer = my_Layernorm(configs.d_model),
-                projection = _Linear(configs.d_model, configs.c_out, has_bias=True)
+                norm_layer = my_Layernorm(args.d_model),
+                projection = _Linear(args.d_model, args.c_out, has_bias=True)
             )
 
 
