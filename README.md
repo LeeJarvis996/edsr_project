@@ -18,6 +18,7 @@ Great thanks to [TimeNet repo](https://github.com/thuml/Time-Series-Library/tree
 
 # Contents
 - [Installation](#Installation)
+- [Data](#Data)
 - [How to run](#Run)
 
 # The directory structure of the code
@@ -37,6 +38,9 @@ For now, we only support CPU version MindSpore. We are executing the code using 
 ```bash
 pip install https://ms-release.obs.cn-north-4.myhuaweicloud.com/2.1.1/MindSpore/cpu/x86_64/mindspore-2.1.1-cp38-cp38-win_amd64.whl --trusted-host ms-release.obs.cn-north-4.myhuaweicloud.com -i https://pypi.tuna.tsinghua.edu.cn/simple
 ```
+
+# Data
+Please download the data from the [Goodle Drive](https://drive.google.com/file/d/1-nC6xR3L4G7JgARqJjlcNjE82in5jAjB/view?usp=sharing).
 
 # Run
 ```shell
