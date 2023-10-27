@@ -43,7 +43,7 @@ pip install https://ms-release.obs.cn-north-4.myhuaweicloud.com/2.1.1/MindSpore/
 ```
 
 # Data
-Please download the data from the [Goodle Drive](https://drive.google.com/file/d/1-nC6xR3L4G7JgARqJjlcNjE82in5jAjB/view?usp=sharing).
+Please download the data from the [Google Drive](https://drive.google.com/file/d/1-nC6xR3L4G7JgARqJjlcNjE82in5jAjB/view?usp=sharing).
 
 # Run
 ```shell
