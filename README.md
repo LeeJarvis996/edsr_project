@@ -5,7 +5,7 @@ Great thanks to [TSlib](https://github.com/thuml/Time-Series-Library/tree/main).
 - 2023-10-27 Support the Short-term-forcasting task.
 - 2023-10-16 Add several benchmark datasets.
 - 2023-10-09 Support [ETSformer](https://github.com/thuml/Time-Series-Library/blob/main/models/ETSformer.py).
-- 2023-09-23 Support [Autoformer](https://github.com/thuml/Time-Series-Library/blob/main/models/Autoformer.py).
+- 2023-09-30 Support [Autoformer](https://github.com/thuml/Time-Series-Library/blob/main/models/Autoformer.py).
 - 2023-09-23 Support [Pyraformer](https://github.com/thuml/Time-Series-Library/blob/main/models/Pyraformer.py).
 - 2023-09-22 Support [Informer](https://github.com/thuml/Time-Series-Library/blob/main/models/Informer.py).
 - 2023-09-15 Support [Reformer](https://github.com/thuml/Time-Series-Library/blob/main/models/Transformer.py).
