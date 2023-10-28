@@ -1,4 +1,4 @@
-This is just a temporary version. This Time-series Prediction Benchmark is under the leadership of Professor Lei CHEN.
+This is a DEMO. This Time-series Prediction Benchmark is under the leadership of Professor Lei CHEN.
 Great thanks to [TSlib](https://github.com/thuml/Time-Series-Library/tree/main).
 
 🎉 **NEWS**: 
