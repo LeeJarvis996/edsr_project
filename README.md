@@ -65,6 +65,17 @@ Other parameters
 - ``c_out``: Output size.
 - ``dropout``: Dropout rate.
 
+# Other Setup
+long term forecasting:
+| Model                | GCN | GAT | HAN |
+|----------------------|-----------------|----------------|----------------|
+| args.features                | 0.6892(0.026)          | 0.6703(0.003)          |0.6783(0.032)|
+| args.target| 0.6975(0.027)          | 0.6794(0.010)          |0.7125(0.032)|
+| CSMAR + SectorIndustry| 0.6925(0.022)          | 0.6953(0.030)          |0.7031(0.033)|
+| CSMAR + Ownership    | 0.6928(0.020)          | 0.6917(0.009)          |0.7061(0.033)|
+| CSMAR + Partnership  | 0.6911(0.020)        | 0.6758(0.008)         |0.7244(0.019)|
+
+
 # Outstanding issues
 - For Reformer, there is no CPU-based Mindspore equivalent of the PyTorch torch.einsum() function. Consequently, we continue to utilize the PyTorch version of this function in our code for its superior performance.(layers/reformer_attn.py) If you prefer not to use PyTorch, we also offer our own custom time-inefficient function, which can be found in the commented-out code at the same location.
 - For Autoformer, ops.roll does not support CPU, and therefore we use the numpy instead.(layers/autoformer_attn.py)
