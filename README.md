@@ -56,7 +56,7 @@ python exp.py  \
 
 
 Other parameters
-- ``model``: Could choose from ['Transformer', 'Informer', 'Reformer', 'Pyraformer', 'Autoformer'].
+- ``model``: Could choose from ['Transformer', 'Informer', 'Reformer', 'Pyraformer', 'Autoformer', 'ETSformer'].
 - ``patience``: For early stop.
 - ``batch_size``: Batch_size.
 - ``learning_rate``: Learning rate of the optimizer.
@@ -66,6 +66,9 @@ Other parameters
 - ``c_out``: Output size.
 - ``dropout``: Dropout rate.
 - ``embed``: time features encoding, options:[timeF, fixed, learned].
+- ``task_name``: task name, options:[short_term_forecast, short_term_forecast].
+- ``label_len``: start token length.
+- ``pred_len``: prediction sequence length.
 
 # Dataset configurations
 For long-term forecasting tasks:
