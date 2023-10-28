@@ -20,7 +20,7 @@ Great thanks to [TSlib](https://github.com/thuml/Time-Series-Library/tree/main).
 - [Installation](#Installation)
 - [Data](#Data)
 - [How to run](#Run)
-- [Dataset configurations](#Dataset configurations)
+
 
 # The directory structure of the code
 ```shell
