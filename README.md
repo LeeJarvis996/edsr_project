@@ -65,6 +65,7 @@ Other parameters
 - ``dec_in``: Decoder input size.
 - ``c_out``: Output size.
 - ``dropout``: Dropout rate.
+- ``embed``: time features encoding, options:[timeF, fixed, learned].
 
 # Dataset configurations
 For long-term forecasting tasks:
