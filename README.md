@@ -66,7 +66,7 @@ Other parameters
 - ``dropout``: Dropout rate.
 
 # Other Setup
-long term forecasting:
+For long-term forecasting tasks:
 
 
 <table>
@@ -190,7 +190,7 @@ long term forecasting:
   </tbody>
 </table>
 
-
+For short-term forecasting tasks, we support four models: Transformer, Autoformer, Pyraformer, and Informer. Please configure args.features as 'S'.
 # Outstanding issues
 - For Reformer, there is no CPU-based Mindspore equivalent of the PyTorch torch.einsum() function. Consequently, we continue to utilize the PyTorch version of this function in our code for its superior performance.(layers/reformer_attn.py) If you prefer not to use PyTorch, we also offer our own custom time-inefficient function, which can be found in the commented-out code at the same location.
 - For Autoformer, ops.roll does not support CPU, and therefore we use the numpy instead.(layers/autoformer_attn.py)
