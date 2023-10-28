@@ -85,11 +85,15 @@ long term forecasting:
       <th colspan="3">Electricity</th>
       <th colspan="3">National_illness</th>
       <th colspan="3">Traffic</th>
+      <th colspan="3">Weather</th>
     </tr>
   </thead>
   <tbody>
     <tr>
       <td>args.features</td>
+      <td>'M'</td>
+      <td>'S'</td>
+      <td>'MS'</td>
       <td>'M'</td>
       <td>'S'</td>
       <td>'MS'</td>
@@ -123,6 +127,9 @@ long term forecasting:
       <td>'OT'</td>
       <td>'OT'</td>
       <td>'OT'</td>
+      <td>'OT'</td>
+      <td>'OT'</td>
+      <td>'OT'</td>
     </tr>
     <tr>
       <td>args.enc_in</td>
@@ -141,6 +148,9 @@ long term forecasting:
       <td>862</td>
       <td>1</td>
       <td>862</td>
+      <td>21</td>
+      <td>1</td>
+      <td>21</td>
     </tr>
     <tr>
       <td>args.dec_in</td>
@@ -159,6 +169,9 @@ long term forecasting:
       <td>862</td>
       <td>1</td>
       <td>862</td>
+      <td>21</td>
+      <td>1</td>
+      <td>21</td>
     </tr>
     <tr>
       <td>args.c_out</td>
@@ -175,6 +188,9 @@ long term forecasting:
       <td>1</td>
       <td>1</td>
       <td>862</td>
+      <td>1</td>
+      <td>1</td>
+      <td>21</td>
       <td>1</td>
       <td>1</td>
     </tr>
