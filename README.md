@@ -67,13 +67,13 @@ Other parameters
 
 # Other Setup
 long term forecasting:
-| Model                | ETTh |||Exchange_rate |||
-|----------------------|-----------------|----------------|----------------|-----------------|----------------|----------------|
-| args.features   | 'M' | 'S'          |'MS'|'M' | 'S'          |'MS'|
-| args.target| 'OT'          | 'OT'          |'OT'|'OT'          | 'OT'          |'OT'|
-| args.enc_in| 7          | 1          |7| 8          | 1          |8|
-| args.dec_in| 7          | 1          |7|8          | 1          |8|
-| args.c_out| 7        | 1         |7|8          | 1          |1|
+| Model                | ETTh |||Exchange_rate |||Electricity |||National_illness |||
+|----------------------|-----------------|----------------|----------------|-----------------|----------------|----------------|-----------------|----------------|----------------|
+| args.features   | 'M' | 'S'          |'MS'|'M' | 'S'          |'MS'|'M' | 'S'          |'MS'|'M' | 'S'          |'MS'|'MS'|'M' | 'S'          |'MS'|
+| args.target| 'OT'          | 'OT'          |'OT'|'OT'          | 'OT'          |'OT'|'OT'          | 'OT'          |'OT'|'OT'          | 'OT'          |'OT'|
+| args.enc_in| 7          | 1          |7| 8          | 1          |8|321          | 1          |321| 7          | 1          |7|
+| args.dec_in| 7          | 1          |7|8          | 1          |8|321          | 1          |321| 7          | 1          |7|
+| args.c_out| 7        | 1         |7|8          | 1          |1|321          | 1          |1| 7          | 1          |1|
 
 
 # Outstanding issues
