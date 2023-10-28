@@ -76,6 +76,110 @@ long term forecasting:
 | args.c_out| 7        | 1         |7|8          | 1          |1|321          | 1          |1| 7          | 1          |1|
 
 
+<table>
+  <thead>
+    <tr>
+      <th rowspan="2">Model</th>
+      <th colspan="3">ETTh</th>
+      <th colspan="3">Exchange_rate</th>
+      <th colspan="3">Electricity</th>
+      <th colspan="3">National_illness</th>
+    </tr>
+    <tr>
+      <th>'M'</th>
+      <th>'S'</th>
+      <th>'MS'</th>
+      <th>'M'</th>
+      <th>'S'</th>
+      <th>'MS'</th>
+      <th>'M'</th>
+      <th>'S'</th>
+      <th>'MS'</th>
+      <th>'M'</th>
+      <th>'S'</th>
+      <th>'MS'</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>args.features</td>
+      <td>'M'</td>
+      <td>'S'</td>
+      <td>'MS'</td>
+      <td>'M'</td>
+      <td>'S'</td>
+      <td>'MS'</td>
+      <td>'M'</td>
+      <td>'S'</td>
+      <td>'MS'</td>
+      <td>'M'</td>
+      <td>'S'</td>
+      <td>'MS'</td>
+    </tr>
+    <tr>
+      <td>args.target</td>
+      <td>'OT'</td>
+      <td>'OT'</td>
+      <td>'OT'</td>
+      <td>'OT'</td>
+      <td>'OT'</td>
+      <td>'OT'</td>
+      <td>'OT'</td>
+      <td>'OT'</td>
+      <td>'OT'</td>
+      <td>'OT'</td>
+      <td>'OT'</td>
+      <td>'OT'</td>
+    </tr>
+    <tr>
+      <td>args.enc_in</td>
+      <td>7</td>
+      <td>1</td>
+      <td>7</td>
+      <td>8</td>
+      <td>1</td>
+      <td>8</td>
+      <td>321</td>
+      <td>1</td>
+      <td>321</td>
+      <td>7</td>
+      <td>1</td>
+      <td>7</td>
+    </tr>
+    <tr>
+      <td>args.dec_in</td>
+      <td>7</td>
+      <td>1</td>
+      <td>7</td>
+      <td>8</td>
+      <td>1</td>
+      <td>8</td>
+      <td>321</td>
+      <td>1</td>
+      <td>321</td>
+      <td>7</td>
+      <td>1</td>
+      <td>7</td>
+    </tr>
+    <tr>
+      <td>args.c_out</td>
+      <td>7</td>
+      <td>1</td>
+      <td>7</td>
+      <td>8</td>
+      <td>1</td>
+      <td>1</td>
+      <td>321</td>
+      <td>1</td>
+      <td>1</td>
+      <td>7</td>
+      <td>1</td>
+      <td>1</td>
+    </tr>
+  </tbody>
+</table>
+
+
 # Outstanding issues
 - For Reformer, there is no CPU-based Mindspore equivalent of the PyTorch torch.einsum() function. Consequently, we continue to utilize the PyTorch version of this function in our code for its superior performance.(layers/reformer_attn.py) If you prefer not to use PyTorch, we also offer our own custom time-inefficient function, which can be found in the commented-out code at the same location.
 - For Autoformer, ops.roll does not support CPU, and therefore we use the numpy instead.(layers/autoformer_attn.py)
