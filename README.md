@@ -67,7 +67,7 @@ Other parameters
 
 # Other Setup
 long term forecasting:
-| Model                | ETTh | GAT | HAN |
+| Model                | ETTh |  |  |
 |----------------------|-----------------|----------------|----------------|
 | args.features   | 'M' | 'S'          |'MS'|
 | args.target| 'OT'          | 'OT'          |'OT'|
