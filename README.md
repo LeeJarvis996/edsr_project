@@ -85,20 +85,6 @@ long term forecasting:
       <th colspan="3">Electricity</th>
       <th colspan="3">National_illness</th>
     </tr>
-    <tr>
-      <th>'M'</th>
-      <th>'S'</th>
-      <th>'MS'</th>
-      <th>'M'</th>
-      <th>'S'</th>
-      <th>'MS'</th>
-      <th>'M'</th>
-      <th>'S'</th>
-      <th>'MS'</th>
-      <th>'M'</th>
-      <th>'S'</th>
-      <th>'MS'</th>
-    </tr>
   </thead>
   <tbody>
     <tr>
