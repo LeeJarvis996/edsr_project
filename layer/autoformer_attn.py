@@ -1,11 +1,6 @@
-from typing import Union, Optional
 import mindspore
 import mindspore.ops as ops
 from mindspore.common.tensor import Tensor
-from mindspore.common.parameter import Parameter
-from mindspore.common.initializer import initializer, XavierNormal, XavierUniform, \
-    HeUniform, Uniform, _calculate_fan_in_and_fan_out
-from mindspore.ops.function.nn_func import _check_qkv_shape, _check_kpm_shape, _in_projection_packed, _in_projection, _inner_pad
 from mindspore.nn.cell import Cell
 from .basic import _Linear, Dropout
 import math

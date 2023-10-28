@@ -3,7 +3,6 @@ import mindspore
 import numpy as np
 import mindspore.ops as ops
 from mindspore.nn.cell import Cell
-from tqdm import trange
 from mindspore import Parameter
 from functools import partial, reduce, wraps
 from operator import mul

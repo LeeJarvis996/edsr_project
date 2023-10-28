@@ -1,7 +1,6 @@
 from mindspore.nn.cell import Cell
 from .basic import Dense, Dropout
 from mindspore.nn import Conv1d
-from mindspore.common.initializer import initializer, HeNormal
 import math
 from mindspore.ops import Exp
 from mindspore.ops import Sin

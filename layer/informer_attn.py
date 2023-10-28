@@ -1,24 +1,13 @@
 import sys
 sys.path.append("..")
-from typing import Union, Optional
 import mindspore
 import mindspore.ops as ops
 from mindspore.common.tensor import Tensor
 from mindspore.common.parameter import Parameter
 from mindspore.common.initializer import initializer, XavierNormal, XavierUniform, \
     HeUniform, Uniform, _calculate_fan_in_and_fan_out
-from mindspore.ops.function.nn_func import multi_head_attention_forward
 from mindspore.nn.cell import Cell
 from .basic import _Linear, Dropout
-from .activation import ReLU, GELU
-from .normalization import LayerNorm
-from .container import CellList
-from .Embed import DataEmbedding
-from model.transformer import TransformerEncoder, TransformerEncoderLayer
-from .basic import _Linear
-from .reformer_attn import LSHSelfAttention
-import time
-import copy
 import numpy as np
 from math import sqrt
 
