@@ -67,13 +67,13 @@ Other parameters
 
 # Other Setup
 long term forecasting:
-| Model                | GCN | GAT | HAN |
+| Model                | ETTh | GAT | HAN |
 |----------------------|-----------------|----------------|----------------|
-| args.features                | 0.6892(0.026)          | 0.6703(0.003)          |0.6783(0.032)|
-| args.target| 0.6975(0.027)          | 0.6794(0.010)          |0.7125(0.032)|
-| CSMAR + SectorIndustry| 0.6925(0.022)          | 0.6953(0.030)          |0.7031(0.033)|
-| CSMAR + Ownership    | 0.6928(0.020)          | 0.6917(0.009)          |0.7061(0.033)|
-| CSMAR + Partnership  | 0.6911(0.020)        | 0.6758(0.008)         |0.7244(0.019)|
+| args.features   | 'M' | 'S'          |'MS'|
+| args.target| 'OT'          | 'OT'          |'OT'|
+| args.enc_in| 7          | 1          |7|
+| args.dec_in| 7          | 1          |7|
+| args.c_out| 7        | 1         |7|
 
 
 # Outstanding issues
