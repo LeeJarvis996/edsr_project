@@ -19,29 +19,19 @@ class EncoderLayer(Cell):
 
     def __init__(self, d_model, d_inner, n_head, dropout=0.1, normalize_before=True, batch_first=False):
         super(EncoderLayer, self).__init__()
-
-        # self.slf_attn = AttentionLayer(
-        #     FullAttention(mask_flag=True, factor=0,
-        #                   attention_dropout=dropout, output_attention=False),
-        #     d_model, n_head)
         self.slf_attn = MultiheadAttention(d_model, n_head, dropout=dropout, batch_first=batch_first)
         self.pos_ffn = PositionwiseFeedForward(
             d_model, d_inner, dropout=dropout, normalize_before=normalize_before)
 
     def construct(self, enc_input, slf_attn_mask=None):
         attn_mask = RegularMask(slf_attn_mask)
-        # print("attn_mask.mask", attn_mask.mask.shape)
-        # print(type(attn_mask.mask))
-        # print("enc_input",enc_input.shape)
         enc_output, _ = self.slf_attn(enc_input, enc_input, enc_input, attn_mask=attn_mask.mask)
-        # print("enc_output",enc_output.shape)
         enc_output = self.pos_ffn(enc_output)
         return enc_output
 
 
 class RegularMask():
     def __init__(self, mask):
-        # self._mask = mask.unsqueeze(1)
         self._mask = ops.ExpandDims()(mask, 1)
     @property
     def mask(self):
@@ -68,7 +58,6 @@ class PositionwiseFeedForward(Cell):
         if self.normalize_before:
             x = self.layer_norm(x)
 
-        # x = F.gelu(self.w_1(x))
         x = ops.gelu(self.w_1(x))
         x = self.dropout(x)
         x = self.w_2(x)
@@ -179,7 +168,6 @@ class MultiheadAttention(Cell):
 
         if self.batch_first and is_batched:
             attn_output = attn_output.swapaxes(1, 0)
-        # print("need_weights",need_weights)      # False
         if need_weights:
             return attn_output, attn_output_weights
         return (attn_output,)
@@ -194,13 +182,8 @@ def multi_head_attention_forward(query, key, value, embed_dim_to_check, num_head
                                  is_causal=False, k_is_v=False, q_is_k=False):
     """multi head attetion forward function"""
     is_batched = _check_qkv_shape(query.ndim, key.ndim, value.ndim)
-    # print("is_batched",is_batched)  # True
-    # print("key_padding_mask", key_padding_mask) # None
     if key_padding_mask is not None:
         _check_kpm_shape(query.ndim, key_padding_mask.ndim)
-    # if attn_mask is not None:
-    #     _check_attn_mask_shape(query.ndim, query.shape, key.shape, attn_mask.ndim,
-    #                            attn_mask.shape, num_heads)
 
     if not is_batched:
         query = query.expand_dims(1)
@@ -211,15 +194,8 @@ def multi_head_attention_forward(query, key, value, embed_dim_to_check, num_head
 
     tgt_len, bsz, embed_dim = query.shape
     src_len, _, _ = key.shape
-    # if key_padding_mask is not None:
-    #     _kpm_dtype = key_padding_mask.dtype
-    #     if _kpm_dtype != mstype.bool_ and not ops.is_floating_point(key_padding_mask):
-    #         raise ValueError("The `key_padding_mask` only supports bool and floating dtypes.")
-    # if embed_dim != embed_dim_to_check:
-    #     raise ValueError(f"The `embed_dim` should be {embed_dim_to_check}, but got {embed_dim}.")
 
     head_dim = embed_dim // num_heads
-    # print(head_dim, key.shape, query.shape)
     if head_dim * num_heads != embed_dim:
         raise ValueError(f"The `embed_dim` {embed_dim} can not be divisible by `num_heads` {num_heads}.")
     if use_separate_proj_weight:
@@ -236,7 +212,6 @@ def multi_head_attention_forward(query, key, value, embed_dim_to_check, num_head
         if in_proj_weight is None:
             raise ValueError("`use_separate_proj_weight` is ``False`` but `in_proj_weight` got ``None``.")
         q, k, v = _in_projection_packed(query, key, value, in_proj_weight, in_proj_bias, k_is_v, q_is_k)
-        # print('in_projection_packed')
     else:
         if q_proj_weight is None:
             raise ValueError("`use_separate_proj_weight` is ``True`` but `q_proj_weight` got ``None``.")
@@ -249,32 +224,6 @@ def multi_head_attention_forward(query, key, value, embed_dim_to_check, num_head
         else:
             b_q, b_k, b_v = in_proj_bias.tensor_split(3)
         q, k, v = _in_projection(query, key, value, q_proj_weight, k_proj_weight, v_proj_weight, b_q, b_k, b_v)
-        # print('in_projection')
-
-    # print(k.shape, q.shape, v.shape)
-    # # prep attention mask
-    # if attn_mask is not None:
-    #     if attn_mask.dtype == mstype.uint8:
-    #         attn_mask = attn_mask.astype(mstype.bool_)
-    #     else:
-    #         if not ops.is_floating_point(attn_mask) and attn_mask.dtype != mstype.bool_:
-    #             raise ValueError(f"`attn_mask` only support float, byte, and bool types, "
-    #                              f"but got not {attn_mask.dtype}.")
-    #     # ensure attn_mask's ndim is 3
-    #     if attn_mask.ndim == 2:
-    #         correct_2d_size = (tgt_len, src_len)
-    #         if attn_mask.shape != correct_2d_size:
-    #             raise ValueError(f"The shape of the `attn_mask` should be {correct_2d_size}, "
-    #                              f"but got {attn_mask.shape}.")
-    #         attn_mask = attn_mask.expand_dims(0)
-    #     elif attn_mask.ndim == 3:
-    #         correct_3d_size = (bsz * num_heads, tgt_len, src_len)
-    #         if attn_mask.shape != correct_3d_size:
-    #             raise ValueError(f"The shape of the `attn_mask` should be {correct_3d_size}, "
-    #                              f"but got {attn_mask.shape}.")
-    #     else:
-    #         raise ValueError(f"The ndim of `attn_mask` only support 2 or 3, "
-    #                          f"but got {attn_mask.ndim}.")
 
 
     if bias_k is not None and bias_v is not None:
@@ -285,9 +234,7 @@ def multi_head_attention_forward(query, key, value, embed_dim_to_check, num_head
         k = ops.cat([k, bias_k.tile((1, bsz, 1))])
         v = ops.cat([v, bias_v.tile((1, bsz, 1))])
         if attn_mask is not None:
-            # print("before_pad", attn_mask.shape)
             attn_mask = _inner_pad(attn_mask, (0, 1))
-            # print("after_pad", attn_mask.shape)
         if key_padding_mask is not None:
             key_padding_mask = _inner_pad(key_padding_mask, (0, 1))
     else:
@@ -345,16 +292,9 @@ def multi_head_attention_forward(query, key, value, embed_dim_to_check, num_head
         new_attn_mask = ops.zeros_like(attn_mask, dtype=q.dtype)
         attn_mask = new_attn_mask.masked_fill(attn_mask, float("-inf"))
 
-    # if attn_mask is not None:
-    #     if attn_mask.shape[0] == 1:
-    #         attn_mask = attn_mask.expand_dims(0)
-    #     else:
-    #         attn_mask = attn_mask.view((bsz, num_heads, -1, src_len))
-
     q = q.view((bsz, num_heads, tgt_len, head_dim))
     k = k.view((bsz, num_heads, src_len, head_dim))
     v = v.view((bsz, num_heads, src_len, head_dim))
-    # print(q.shape, k.shape, v.shape)
 
     attn_output, attn_output_weights = _scaled_dot_product_attention(
         q, k, v, attn_mask, dropout_p, is_causal, training)

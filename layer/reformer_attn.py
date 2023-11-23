@@ -34,14 +34,10 @@ def process_inputs_chunk(fn, chunks=1, dim=0):
     def inner_fn(*args, **kwargs):
         keys, values, len_args = kwargs.keys(), kwargs.values(), len(args)
         split = ops.Split(output_num = chunks, axis=dim)
-        # chunked_args = list(zip(*map(lambda x: x.chunk(chunks, dim=dim), list(args) + list(values))))
         a = list(map(lambda x: split(x), list(args) + list(values)))
         chunked_args = [(a[0][0],a[1][0])]
-        # print("chunked_args", chunked_args)
         all_args = map(lambda x: ((x[:len_args], dict(zip(keys, x[len_args:])))), chunked_args)
-        # all_args = list(map(lambda x: (x[:len_args]), chunked_args))
         outputs = [fn(*c_args, **c_kwargs) for c_args, c_kwargs in all_args]
-        # return tuple(map(lambda x: torch.cat(x, dim=dim), zip(*outputs)))
         return tuple(map(lambda x: ops.concat(x, dim), zip(*outputs)))
     return inner_fn
 
@@ -52,17 +48,14 @@ def split_at_index(dim, index, t):
     return t[l], t[r]
 
 def expand_dim(dim, k, t):
-    # t = t.unsqueeze(dim)
     t = ops.ExpandDims()(t, dim)
     expand_shape = [-1] * len(t.shape)
     expand_shape[dim] = k
-    # return t.expand(*expand_shape)
     return ops.expand(t, mindspore.Tensor(np.array(*expand_shape), mindspore.int32))
 
 def max_neg_value(tensor):
     tensor = tensor.asnumpy()
     return np.finfo(tensor.dtype).max
-    # return -torch.finfo(tensor.dtype).max
 
 def merge_dims(ind_from, ind_to, tensor):
     '''
@@ -76,8 +69,6 @@ def merge_dims(ind_from, ind_to, tensor):
     shape = list(tensor.shape)
     arr_slice = slice(ind_from, ind_to + 1)
     shape[arr_slice] = [reduce(mul, shape[arr_slice])]
-    # print("shape", shape)
-    # print("tensor", tensor)
     return tensor.reshape(*shape)
 
 def default(val, default_val):
@@ -95,7 +86,6 @@ def chunked_sum(tensor, chunks=1):
     tensor = tensor.reshape(-1, last_dim)
     summed_tensors = [c.sum(dim=-1) for c in tensor.chunk(chunks, dim=0)]
     return ops.concat(summed_tensors, 0).reshape(orig_size)
-    # return torch.cat(summed_tensors, dim=0).reshape(orig_size)
 
 def einsum_func1(dropped_vecs, random_rotations):
     '''
@@ -114,8 +104,6 @@ def einsum_func1(dropped_vecs, random_rotations):
     # return result.transpose(0, 2, 1, 3)
     # print("einsum_func1")
     import torch
-    # print("11", dropped_vecs)
-    # print("22", random_rotations)
     a = torch.einsum('btf,bfhi->bhti', torch.from_numpy(dropped_vecs.asnumpy()), torch.from_numpy(random_rotations.asnumpy()))
     return mindspore.Tensor(a.numpy())
 
@@ -131,7 +119,6 @@ def einsum_func2(x, y):
     #                 # 计算内积并将结果存储在 result 中, result[b, h, i, j] = torch.dot(x[b, h, i], y[b, h, j])
     #                 result[b, h, i, j] = ops.ReduceSum() (x[b, h, i] *  y[b, h, j])
     # return result
-    # print("einsum_func2")
     import torch
     a = torch.einsum('bhie,bhje->bhij', torch.from_numpy(x.asnumpy()), torch.from_numpy(y.asnumpy()))
     return mindspore.Tensor(a.numpy())
@@ -148,7 +135,6 @@ def einsum_func3(x, y):
     #                 # 计算内积并将结果存储在 result 中
     #                 result[b, u_idx, i_idx, e_idx] = ops.ReduceSum()(x[b, u_idx, i_idx] * y[b, u_idx, :, e_idx])
     # return result
-    # print("einsum_func3")
     import torch
     a = torch.einsum('buij,buje->buie', torch.from_numpy(x.asnumpy()), torch.from_numpy(y.asnumpy()))
     return mindspore.Tensor(a.numpy())
@@ -164,7 +150,6 @@ def einsum_func4(x, y):
     #             # 计算内积并将结果存储在 result 中
     #             result[b, i_idx, j_idx] = ops.ReduceSum()(x[b, i_idx] * y[b, j_idx])
     # return result
-    # print("einsum_func4")
     import torch
     a = torch.einsum('bie,bje->bij', torch.from_numpy(x.asnumpy()), torch.from_numpy(y.asnumpy()))
     return mindspore.Tensor(a.numpy())
@@ -180,7 +165,6 @@ def einsum_func5(x, y):
     #             # 计算内积并将结果存储在 result 中
     #             result[b, i_idx, j_idx] = ops.ReduceSum()(x[b, i_idx] * y[b, j_idx])
     # return result
-    # print("einsum_func5")
     import torch
     a = torch.einsum('bij,bje->bie', torch.from_numpy(x.asnumpy()), torch.from_numpy(y.asnumpy()))
     return mindspore.Tensor(a.numpy())
@@ -189,16 +173,8 @@ def expand_as(tensor, target):
     tensor_shape = np.shape(tensor)
     target_shape = np.shape(target)
     assert tensor_shape[1] == target_shape[1]
-    t1 = time.time()
     expanded_tensor = np.zeros_like(target)
-    t2 = time.time()
-    # print("expand_as 1:{}".format(t2-t1))
-    # 将原始张量的每个元素复制到扩展后的张量中
     expanded_tensor[:] = tensor.numpy().tolist()[0]
-    # for i in range(target_shape[0]):
-    #     expanded_tensor[i] = tensor.numpy().tolist()[0]
-    t3 = time.time()
-    # print("expand_as 2:{}".format(t3-t2))
     return mindspore.tensor(expanded_tensor.tolist(), dtype=mindspore.float32)
 
 def expand(tensor, dim):
@@ -212,8 +188,6 @@ def expand(tensor, dim):
 def batched_index_select(values, indices):
     indices = ops.Cast()(indices, mindspore.int32)
     last_dim = values.shape[-1]
-    # return values.gather(1, indices[:, :, None].expand(-1, -1, last_dim))
-    # a = mindspore.numpy.tile(ops.ExpandDims()(indices[:, :, None], -1),(1, 1, last_dim))
     size = mindspore.Tensor(np.array([-1, -1, last_dim]), mindspore.int32)
     a = ops.expand(indices[:, :, None], size)
     return ops.GatherD()(values, 1, a)
@@ -221,12 +195,9 @@ def batched_index_select(values, indices):
 
 
 def sort_key_val(t1, t2, dim=-1):
-    # values, indices = t1.sort(dim=dim)
     sort = ops.Sort(axis=dim)
     values, indices = sort(t1)
     t2 = t2.expand_as(t1)
-    # t2 = expand_as(t2, t1)
-    # return values, t2.gather(dim, indices)
     return values, ops.GatherD()(t2, dim, indices)
 
 def apply_rotary_pos_emb(qk, sinu_pos):
@@ -278,7 +249,6 @@ class LSHAttention(Cell):
     def hash_vectors(self, n_buckets, vecs):
         batch_size = vecs.shape[0]
         # device = vecs.device
-
         # See https://arxiv.org/pdf/1509.02897.pdf
         # We sample a different random rotation for each round of hashing to
         # decrease the probability of hash misses.
@@ -291,43 +261,28 @@ class LSHAttention(Cell):
             self.n_hashes if self._rehash_each_round else 1,
             rot_size // 2)
 
-        # random_rotations = torch.randn(rotations_shape, dtype=vecs.dtype, device=device).expand(batch_size, -1, -1, -1)
         random_rotations = expand(np.random.normal(0, 1, rotations_shape), batch_size)
         dropped_vecs = self.dropout_for_hash(vecs)
 
-        # rotated_vecs = torch.einsum('btf,bfhi->bhti', dropped_vecs, random_rotations)
         rotated_vecs = einsum_func1(dropped_vecs, random_rotations) # (256, 64, 4, 24)
 
-        # print("Has vector1:{}".format(t12-t11))
         if self._rehash_each_round:
             # rotated_vectors size [batch,n_hash,seq_len,buckets]
             rotated_vecs = cat( (rotated_vecs, -rotated_vecs), dim=-1)
-            # buckets = torch.argmax(rotated_vecs, dim=-1)
             buckets = rotated_vecs.argmax(axis=-1)
         else:   # 应该没执行到这一步
             print("检查")
             exit()
             rotated_vecs = cat( (rotated_vecs, -rotated_vecs), dim=-1)
-            # In this configuration, we map each item to the top self.n_hashes buckets
-            # rotated_vecs = torch.squeeze(rotated_vecs, 1)
             rotated_vecs = ops.squeeze(rotated_vecs, axis=1)
-            # bucket_range = torch.arange(rotated_vecs.shape[-1], device=device)
             bucket_range = ops.arange(rotated_vecs.shape[-1]).astype(mindspore.float32)
             bucket_range = ops.reshape(bucket_range, (1, -1))
             bucket_range = bucket_range.expand_as(rotated_vecs)
-            # bucket_range = expand_as(bucket_range, rotated_vecs)
             _, buckets = sort_key_val(rotated_vecs, bucket_range, dim=-1)
             # buckets size [batch size, seq_len, buckets]
-            # buckets = buckets[... , -self.n_hashes:].transpose(1, 2)
             buckets = buckets[... , -self.n_hashes:].transpose(0, 2, 1)
 
-        # buckets is now (self.n_hashes, seq_len). Next we add offsets so that
-        # bucket numbers from different hashing rounds don't overlap.
-
-        # t12 = time.time()
         offsets = ops.arange(self.n_hashes).astype(mindspore.float32)
-        # t13 = time.time()
-        # print("Has vector2:{}".format(t13 - t12))
 
         offsets = ops.reshape(offsets * n_buckets, (1, -1, 1))
         buckets = ops.reshape(buckets + offsets, (batch_size, -1,))
@@ -350,31 +305,23 @@ class LSHAttention(Cell):
         assert int(buckets.shape[1]) == self.n_hashes * seqlen
         total_hashes = self.n_hashes
 
-
-        # ticker = torch.arange(total_hashes * seqlen, device=device).unsqueeze(0).expand_as(buckets)
         a = ops.arange(total_hashes * seqlen)
         ticker = ops.ExpandDims()(a, 0)
         ticker = ticker.expand_as(buckets)
 
 
         buckets_and_t = seqlen * buckets + (ticker % seqlen)
-        # buckets_and_t = buckets_and_t.detach()
         buckets_and_t = Parameter(buckets_and_t, requires_grad=False)
         # Hash-based sort ("s" at the start of variable names means "sorted")
         sbuckets_and_t, sticker = sort_key_val(buckets_and_t, ticker, dim=-1)
-        # _, undo_sort = sticker.sort(dim=-1)
         _, undo_sort = sticker.sort(axis = -1)
         del ticker
 
 
-        # sbuckets_and_t = sbuckets_and_t.detach()
         sbuckets_and_t = Parameter(sbuckets_and_t, requires_grad=False)
-        # sticker = sticker.detach()
-        # undo_sort = undo_sort.detach()
         sticker = Parameter(sticker, requires_grad=False)
         undo_sort = Parameter(undo_sort, requires_grad=False)
         if exists(pos_emb):
-            # 跳过了
             qk = apply_rotary_pos_emb(qk, pos_emb)
 
         st = (sticker % seqlen)
@@ -392,7 +339,6 @@ class LSHAttention(Cell):
         # attention softmax, but normalizing keys is needed so that similarity for
         # the purposes of attention correctly corresponds to hash locality.
         bq = bqk    # (256, 192, 4, 64)
-        # bk = F.normalize(bqk, p=2, dim=-1).type_as(bq)
         l2_normalize = ops.L2Normalize(axis=-1)
         bk = l2_normalize(bqk)
 
@@ -408,35 +354,26 @@ class LSHAttention(Cell):
         bkv_t = look_one_back(bkv_t)
 
         # Dot-product attention.
-        # dots = torch.einsum('bhie,bhje->bhij', bq, bk) * (dim ** -0.5)    # dim int:64
         dots = einsum_func2(bq, bk) * (dim ** -0.5)
 
         masked_value = max_neg_value(dots)
 
         # Mask for post qk attention logits of the input sequence
         if input_attn_mask is not None:
-            # input_attn_mask = F.pad(input_attn_mask, (0, seqlen - input_attn_mask.shape[-1], 0, seqlen - input_attn_mask.shape[-2]), value=True)
             input_attn_mask = ops.pad(input_attn_mask, padding= (0, seqlen - input_attn_mask.shape[-1], 0, seqlen - input_attn_mask.shape[-2]), value=True)
             dot_attn_indices = ((bq_t * seqlen)[:, :, :, None] + bkv_t[:, :, None, :])
             input_attn_mask = input_attn_mask.reshape(batch_size, -1)
             dot_attn_indices = dot_attn_indices.reshape(batch_size, -1)
-            # mask = input_attn_mask.gather(1, dot_attn_indices).reshape_as(dots)
-            # mask = ops.gather(input_params = input_attn_mask, input_indices = dot_attn_indices, axis = 1).reshape_as(dots)
             mask = ops.GatherD()(input_attn_mask, 1, dot_attn_indices).reshape_as(dots)
-            # dots.masked_fill_(~mask, masked_value)
             dots = ops.masked_fill(dots, ~mask, masked_value)
             del mask
 
         # Input mask for padding in variable lengthed sequences
         if input_mask is not None:
-            # input_mask = F.pad(input_mask, (0, seqlen - input_mask.shape[1]), value=True)
             input_mask = ops.pad(input_mask, padding=(0, seqlen - input_mask.shape[1]), value=True)
-            # mq = input_mask.gather(1, st).reshape((batch_size, chunk_size, -1))
-            # mq = ops.gather(input_params = input_mask, input_indices=dot_attn_indices, axis=1).reshape((batch_size, chunk_size, -1))
             mq = ops.GatherD()(input_mask, 1, dot_attn_indices).reshape((batch_size, chunk_size, -1))
             mkv = look_one_back(mq)
             mask = mq[:, :, :, None] * mkv[:, :, None, :]
-            # dots.masked_fill_(~mask, masked_value)
             dots = ops.masked_fill(dots, ~mask, masked_value)
             del mask
 
@@ -445,7 +382,6 @@ class LSHAttention(Cell):
             mask = bq_t[:, :, :, None] < bkv_t[:, :, None, :]
             if seqlen > query_len:
                 mask = mask & (bkv_t[:, :, None, :] < query_len)
-            # dots.masked_fill_(mask, masked_value)
             dots = ops.masked_fill(dots, mask, masked_value)
             del mask
 
@@ -460,7 +396,6 @@ class LSHAttention(Cell):
             bq_buckets = bkv_buckets = ops.reshape(sbuckets_and_t // seqlen, (batch_size, chunk_size, -1))
             bkv_buckets = look_one_back(bkv_buckets)
             bucket_mask = bq_buckets[:, :, :, None] != bkv_buckets[:, :, None, :]
-            # dots.masked_fill_(bucket_mask, masked_value)
             dots = ops.masked_fill(dots, bucket_mask, masked_value)
             del bucket_mask
 
@@ -484,7 +419,6 @@ class LSHAttention(Cell):
 
             b_locs1 = b_locs[:, :, :, None, :total_hashes]
 
-            # bq_locs = b_locs1.expand(b_locs.shape[:3] + (2, total_hashes))
             bq_locs = ops.expand(b_locs1, mindspore.Tensor(np.array(b_locs.shape[:3] + (2, total_hashes)), mindspore.int32))
             bq_locs = ops.reshape(bq_locs, b_locs.shape)
             bkv_locs = look_one_back(b_locs)
@@ -492,17 +426,14 @@ class LSHAttention(Cell):
             dup_counts = (bq_locs[:, :, :, None, :] == bkv_locs[:, :, None, :, :])
             # for memory considerations, chunk summation of last dimension for counting duplicates
             dup_counts = chunked_sum(dup_counts, chunks=(total_hashes * batch_size))
-            # dup_counts = dup_counts.detach()
             dup_counts = Parameter(dup_counts, requires_grad=False)
             assert dup_counts.shape == dots.shape
-            # dots = dots - torch.log(dup_counts + 1e-9)
             dots = dots - ops.log(dup_counts + 1e-9)
             del dup_counts
 
 
         # Softmax.
         dots_logsumexp = ops.logsumexp(dots, axis=-1, keep_dims=True)
-        # dots = torch.exp(dots - dots_logsumexp).type_as(dots)
         dots = ops.exp(dots - dots_logsumexp)
         dropped_dots = self.dropout(dots)
 
@@ -514,8 +445,6 @@ class LSHAttention(Cell):
 
         # unsort logits
         o = batched_index_select(so, undo_sort)
-        # logits = slogits.gather(1, undo_sort)
-        # logits = ops.gather(input_params=slogits, input_indices=undo_sort, axis=1)
         logits = ops.GatherD()(slogits, 1, undo_sort)
 
         o = ops.reshape(o, (batch_size, total_hashes, seqlen, dim))
@@ -525,12 +454,9 @@ class LSHAttention(Cell):
             query_slice = (slice(None), slice(None), slice(0, query_len))
             o, logits = o[query_slice], logits[query_slice]
 
-        # probs = torch.exp(logits - torch.logsumexp(logits, dim=1, keepdim=True))
         probs = ops.exp(logits - ops.logsumexp(logits, axis = 1, keep_dims=True))
-        # out = torch.sum(o * probs, dim=1)
         out = o * probs
         out = out.sum(axis = 1)
-        # attn = torch.empty(0, device=device)
         attn = mindspore.Tensor([])
 
         # return unsorted attention weights
@@ -541,10 +467,8 @@ class LSHAttention(Cell):
             unsorted_dots.scatter_add_(1, attn_unsort, dots.view_as(attn_unsort))
             del attn_unsort
             unsorted_dots = unsorted_dots.reshape(batch_size, total_hashes, seqlen, seqlen)
-            # attn = torch.sum(unsorted_dots[:, :, 0:query_len, :] * probs, dim=1)
             op = ops.ReduceSum(keep_dims=True)
             attn = op(unsorted_dots[:, :, 0:query_len, :] * probs, 1)
-        # return output, attention matrix, and bucket distribution
 
         return out, attn, buckets
 
@@ -560,11 +484,9 @@ class FullQKAttention(Cell):
         t = query_len
 
         q = qk[:, 0:query_len]
-        # qk = F.normalize(qk, 2, dim=-1).type_as(q)
         l2_normalize = ops.L2Normalize(axis=-1)
         qk = l2_normalize(qk)
 
-        # dot = torch.einsum('bie,bje->bij', q, qk) * (dim ** -0.5)
         dot = einsum_func4(q, qk) * (dim ** -0.5)
 
         # qk attention requires tokens not attend to self
@@ -575,29 +497,22 @@ class FullQKAttention(Cell):
         # Input mask for padding in variable lengthed sequences
         if input_mask is not None:
             mask = input_mask[:, 0:query_len, None] * input_mask[:, None, :]
-            # mask = F.pad(mask, (0, seq_len - mask.shape[-1]), value=True)
             mask = ops.pad(mask, padding=(0, seq_len - mask.shape[-1]), mode='constant', value=True)
-            # dot.masked_fill_(~mask, masked_value)
             dot = ops.masked_fill(dot, ~mask, masked_value)
 
         # Mask for post qk attention logits of the input sequence
         if input_attn_mask is not None:
-            # input_attn_mask = F.pad(input_attn_mask, (0, seq_len - input_attn_mask.shape[-1]), value=True)
             input_attn_mask = ops.pad(input_attn_mask, padding= (0, seq_len - input_attn_mask.shape[-1]), value=True)
-            # dot.masked_fill_(~input_attn_mask, masked_value)
             dot = ops.masked_fill(dot, ~input_attn_mask, masked_value)
         if self.causal:
-            # i, j = torch.triu_indices(t, t, 1)
             i, j = mindspore.numpy.triu_indices(n = t, m = t, k = 1)
             dot[:, i, j] = masked_value
 
         dot = dot.softmax(dim=-1)
         dot = self.dropout(dot)
 
-        # out = torch.einsum('bij,bje->bie', dot, v)
         out = einsum_func5(dot, v)
 
-        # return out, dot, torch.empty(0)
         return out, dot, mindspore.Tensor([])
 
 
@@ -637,25 +552,18 @@ class LSHSelfAttention(Cell):
         self.full_attn_thres = default(full_attn_thres, bucket_size)
 
         self.num_mem_kv = num_mem_kv
-        # self.mem_kv = nn.Parameter(torch.randn(1, num_mem_kv, dim, requires_grad=True)) if num_mem_kv > 0 else None
         self.mem_kv = Parameter(mindspore.numpy.randn((1, num_mem_kv, dim)), requires_grad=True) if num_mem_kv > 0 else None
 
         self.n_local_attn_heads = n_local_attn_heads
-        # self.local_attn = LocalAttention(window_size=bucket_size * 2, causal=causal, dropout=dropout, shared_qk=True, look_forward=(1 if not causal else 0))
         self.local_attn = None  # not implemented yet
         self.callback = None
 
     def construct(self, x, keys = None, input_mask = None, input_attn_mask = None, context_mask = None, pos_emb = None, **kwargs):
-        # device, dtype = x.device, x.dtype
-        dtype = x.dtype
         b, t, e, h, dh, m, l_h = *x.shape, self.heads, self.dim_head, self.num_mem_kv, self.n_local_attn_heads
 
-        # mem_kv = default(self.mem_kv, torch.empty(b, 0, e, dtype=dtype, device=device))
         mem_kv = default(self.mem_kv, mindspore.numpy.empty((b, 0, e)))
-        # mem = mem_kv.expand((b, m, -1))
         size = mindspore.Tensor(np.array([b, m, -1]), mindspore.int32)
         mem = ops.expand(mem_kv, size)
-        # keys = default(keys, torch.empty(b, 0, e, dtype=dtype, device=device))
         keys = default(keys, mindspore.numpy.empty((b, 0, e)))
         c = keys.shape[1]
 
@@ -665,7 +573,6 @@ class LSHSelfAttention(Cell):
         x = cat((x, mem, keys), dim=1)
         qk = self.toqk(x)
         v = self.tov(x) # Tensor(32, 192, 512)
-        # v = v.repeat(1, 1, self.v_head_repeats)
         v = mindspore.numpy.tile(v, (1, 1, self.v_head_repeats))
 
         def merge_heads(v):
@@ -682,22 +589,16 @@ class LSHSelfAttention(Cell):
 
         split_index_fn = partial(split_at_index, 1, l_h)
         (lqk, qk), (lv, v) = map(split_index_fn, (qk, v))
-        # print("(lqk, qk, lv, v)", (lqk, qk, lv, v))
-        # lqk, qk, lv, v = map(merge_batch_and_heads, (lqk, qk, lv, v))
         qk = merge_dims(0, 1, qk)
         v = merge_dims(0, 1, v)
 
 
         masks = {}
         if input_mask is not None or context_mask is not None:
-            # default_mask = torch.tensor([True], device=device)
             default_mask = mindspore.tensor([True])
-            # i_mask = default(input_mask, default_mask.expand(b, t))
             i_mask = default(input_mask, ops.expand(default_mask, mindspore.Tensor(np.array([b, t]), mindspore.int32)))
-            # m_mask = default_mask.expand(b, m)
             size = mindspore.Tensor(np.array([b, m]), mindspore.int32)
             m_mask = ops.expand(default_mask, size)
-            # c_mask = default(context_mask, default_mask.expand(b, c))
             c_mask = default(context_mask, ops.expand(default_mask, mindspore.Tensor(np.array([b, c]), mindspore.int32)))
             mask = cat((i_mask, m_mask, c_mask), dim=1)
             mask = merge_batch_and_heads(expand_dim(1, lsh_h, mask))
@@ -723,11 +624,6 @@ class LSHSelfAttention(Cell):
             '''
             print("Not implemented has_local")
             exit()
-            # lqk, lv = lqk[:, :t], lv[:, :t]
-            # local_out = self.local_attn(lqk, lqk, lv, input_mask=input_mask)
-            # local_out = local_out.reshape(b, l_h, t, -1)
-            # out = out.reshape(b, lsh_h, t, -1)
-            # out = cat((local_out, out), dim=1)
 
         out = split_heads(out).view(b, t, -1)
         out = self.to_out(out)

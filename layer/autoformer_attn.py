@@ -32,11 +32,6 @@ class moving_avg(Cell):
 
     def construct(self, x):
         # padding on the both ends of time series
-        # front = x[:, 0:1, :].repeat(1, (self.kernel_size - 1) // 2, 1)
-        # end = x[:, -1:, :].repeat(1, (self.kernel_size - 1) // 2, 1)
-        # x = torch.cat([front, x, end], dim=1)
-        # x = self.avg(x.permute(0, 2, 1))
-        # x = x.permute(0, 2, 1)
         front = mindspore.numpy.tile(x[:, 0:1, :], (1, (self.kernel_size - 1) // 2, 1))
         end = mindspore.numpy.tile(x[:, -1:, :], (1, (self.kernel_size - 1) // 2, 1))
         x = ops.concat([front, x, end], 1)
@@ -88,7 +83,6 @@ class AutoCorrelation(Cell):
     (2) time delay aggregation
     This block can replace the self-attention family mechanism seamlessly.
     """
-
     def __init__(self, mask_flag=True, factor=1, scale=None, attention_dropout=0.1, output_attention=False):
         super(AutoCorrelation, self).__init__()
         self.factor = factor
@@ -98,8 +92,6 @@ class AutoCorrelation(Cell):
         self.dropout = Dropout(p=attention_dropout)
 
     def time_delay_agg_training(self, values, corr):
-        # print("values", values)
-        # print("corr", corr)
         """
         SpeedUp version of Autocorrelation (a batch-normalization style design)
         This is for the training phase.
@@ -107,25 +99,16 @@ class AutoCorrelation(Cell):
         head = values.shape[1]
         channel = values.shape[2]
         length = values.shape[3]
-        # find top k
-        # mean_value = torch.mean(torch.mean(corr, dim=1), dim=1)
-        # index = torch.topk(torch.mean(mean_value, dim=0), top_k, dim=-1)[1]
-        # weights = torch.stack([mean_value[:, index[i]] for i in range(top_k)], dim=-1)
         top_k = int(self.factor * math.log(length))
         mean_value = ops.mean(ops.mean(corr, axis=1), axis=1)
         index = mindspore.ops.topk(ops.mean(mean_value, axis=0), top_k, dim=-1)[1]
         weights = ops.stack([mean_value[:, index[i]] for i in range(top_k)], axis=-1)
         # update corr
-        # tmp_corr = torch.softmax(weights, dim=-1)
         tmp_corr = ops.softmax(weights, axis=-1)
         # aggregation
         tmp_values = values
-        # delays_agg = torch.zeros_like(values).float()
         delays_agg = ops.zeros_like(values, dtype=mindspore.float32)
         for i in range(top_k):
-            # pattern = torch.roll(tmp_values, -int(index[i]), -1)
-            # delays_agg = delays_agg + pattern * \
-            #              (tmp_corr[:, i].unsqueeze(1).unsqueeze(1).unsqueeze(1).repeat(1, head, channel, length))
             '''
             pattern = ops.roll(tmp_values, -int(index[i]), -1)
             Unsupported op [Roll] on CPU -> we use np.roll instead.
@@ -145,31 +128,21 @@ class AutoCorrelation(Cell):
         channel = values.shape[2]
         length = values.shape[3]
         # index init
-        # init_index = torch.arange(length).unsqueeze(0).unsqueeze(0).unsqueeze(0).repeat(batch, head, channel, 1).cuda()
         init_index = ops.ExpandDims()(ops.ExpandDims()(ops.ExpandDims()(ops.arange(length).astype(mindspore.float32), 0), 0),0)
         init_index = mindspore.numpy.tile(init_index, (batch, head, channel, 1))
         # find top k
-        # mean_value = torch.mean(torch.mean(corr, dim=1), dim=1)
-        # weights, delay = torch.topk(mean_value, top_k, dim=-1)
         top_k = int(self.factor * math.log(length))
         mean_value = ops.mean(ops.mean(corr, axis=1), axis=1)
         weights, delay = ops.topk(mean_value, top_k, dim=-1)
         # update corr
-        # tmp_corr = torch.softmax(weights, dim=-1)
         tmp_corr = ops.softmax(weights, axis=-1)
         # aggregation
-        # tmp_values = values.repeat(1, 1, 1, 2)
-        # delays_agg = torch.zeros_like(values).float()
         tmp_values = mindspore.numpy.tile(values, (1, 1, 1, 2))
         delays_agg = ops.zeros_like(values, dtype=mindspore.float32)
         for i in range(top_k):
-            # tmp_delay = init_index + delay[:, i].unsqueeze(1).unsqueeze(1).unsqueeze(1).repeat(1, head, channel, length)
             a = mindspore.numpy.tile(ops.ExpandDims()(ops.ExpandDims()(ops.ExpandDims()(delay[:, i],1),1),1), (1, head, channel, length))
             tmp_delay = init_index + a
-            # pattern = torch.gather(tmp_values, dim=-1, index=tmp_delay)
             pattern = ops.gather_elements(tmp_values, dim=-1, index=tmp_delay.astype('Int64'))  # error
-            # delays_agg = delays_agg + pattern * \
-            #              (tmp_corr[:, i].unsqueeze(1).unsqueeze(1).unsqueeze(1).repeat(1, head, channel, length))
             temp = ops.ExpandDims()(ops.ExpandDims()(ops.ExpandDims()(tmp_corr[:, i],1),1),1)
             a = mindspore.numpy.tile(temp, (1, head, channel, length))
             delays_agg = delays_agg + pattern * a
@@ -184,28 +157,20 @@ class AutoCorrelation(Cell):
         channel = values.shape[2]
         length = values.shape[3]
         # index init
-        # init_index = torch.arange(length).unsqueeze(0).unsqueeze(0).unsqueeze(0).repeat(batch, head, channel, 1).cuda()
         init_index = ops.ExpandDims()(ops.ExpandDims()(ops.ExpandDims()(ops.arange(length).astype(mindspore.float32), 0), 0),0)
         init_index = mindspore.numpy.tile(init_index, (batch, head, channel, 1))
         # find top k
         top_k = int(self.factor * math.log(length))
-        # weights, delay = torch.topk(corr, top_k, dim=-1)
         weights, delay = ops.topk(corr, top_k, dim=-1)
         # update corr
-        # tmp_corr = torch.softmax(weights, dim=-1)
         tmp_corr = ops.softmax(weights, axis=-1)
 
         # aggregation
-        # tmp_values = values.repeat(1, 1, 1, 2)
-        # delays_agg = torch.zeros_like(values).float()
         tmp_values = mindspore.numpy.tile(values, (1, 1, 1, 2))
         delays_agg = ops.zeros_like(values, dtype=mindspore.float32)
         for i in range(top_k):
-            # tmp_delay = init_index + delay[..., i].unsqueeze(-1)
             tmp_delay = init_index + ops.ExpandDims()(delay[..., i], -1)
-            # pattern = torch.gather(tmp_values, dim=-1, index=tmp_delay)
             pattern = ops.gather_elements(tmp_values, dim=-1, index=tmp_delay)
-            # delays_agg = delays_agg + pattern * (tmp_corr[..., i].unsqueeze(-1))
             delays_agg = delays_agg + pattern * (ops.ExpandDims()(tmp_corr[..., i], -1))
         return delays_agg
 
@@ -214,23 +179,15 @@ class AutoCorrelation(Cell):
         B, L, H, E = queries.shape
         _, S, _, D = values.shape
         if L > S:
-            # zeros = torch.zeros_like(queries[:, :(L - S), :]).float()
             zeros = ops.zeros_like(queries[:, :(L - S), :], dtype=mindspore.float32)
-            # values = torch.cat([values, zeros], dim=1)
-            # keys = torch.cat([keys, zeros], dim=1)
             values = ops.concat([values, zeros], 1)
             keys = ops.concat([keys, zeros], 1)
         else:
             values = values[:, :L, :, :]
             keys = keys[:, :L, :, :]
         # period-based dependencies
-        # q_fft = torch.fft.rfft(queries.permute(0, 2, 3, 1).contiguous(), dim=-1)
-        # k_fft = torch.fft.rfft(keys.permute(0, 2, 3, 1).contiguous(), dim=-1)
-        # res = q_fft * torch.conj(k_fft)
-        # corr = torch.fft.irfft(res, dim=-1)
         fft_net = ops.FFTWithSize(inverse = False, real = True, signal_ndim = 1)
         q_fft = fft_net(queries.transpose(0, 2, 3, 1))
-        # print("q_fft", queries.transpose(0, 2, 3, 1)[0][0])
         fft_net = ops.FFTWithSize(inverse = False, real = True, signal_ndim = 1)
         k_fft = fft_net(keys.transpose(0, 2, 3, 1))
         '''
@@ -241,13 +198,8 @@ class AutoCorrelation(Cell):
         # res = q_fft * ops.conj(k_fft)
         '''
         res = q_fft.asnumpy() * ops.conj(k_fft).asnumpy()
-        # print("res", res.shape)
         net_ = ops.FFTWithSize(inverse=True, real=True, signal_ndim=1)
         corr = net_(Tensor(res))
-        # print("corr", corr[0])
-        # print("res", res[0])
-        # print(corr.shape)
-        # print(res.shape)
 
         # time delay agg
         if self.training:
