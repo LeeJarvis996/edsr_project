@@ -32,11 +32,8 @@ class ReformerLayer(Cell):
         else:
             # fill the time series
             fill_len = (self.bucket_size * 2) - (N % (self.bucket_size * 2))
-            # return torch.cat([queries, torch.zeros([B, fill_len, C]).to(queries.device)], dim=1)
             return ops.concat([queries, ops.Zeros([B, fill_len, C])], 1)
 
-    # def construct(self, queries, keys, values, attn_mask, tau, delta, ttn_mask,
-    #                        key_padding_mask, need_weights, is_causal):
     def construct(self, queries, keys, values, key_padding_mask, need_weights, is_causal, attn_mask):
         # in Reformer: defalut queries=keys
         B, N, C = queries.shape
@@ -69,15 +66,12 @@ class Reformer(Cell):
         self.projection = _Linear(args.d_model, args.c_out, has_bias=True)
 
     def long_forecast(self, x_enc, x_mark_enc, x_dec, x_mark_dec):
-        # x_enc = torch.cat([x_enc, x_dec[:, -self.pred_len:, :]], dim=1)
         x_enc = ops.concat([x_enc, x_dec[:, -self.pred_len:, :]], 1)
 
         if x_mark_enc is not None:
-            # x_mark_enc = torch.cat([x_mark_enc, x_mark_dec[:, -self.pred_len:, :]], dim=1)
             x_mark_enc = ops.concat([x_mark_enc, x_mark_dec[:, -self.pred_len:, :]], 1)
         enc_out = self.enc_embedding(x_enc, x_mark_enc)  # [B,T,C]
 
-        # enc_out, attns = self.encoder(enc_out, attn_mask=None)
         enc_out = self.encoder(enc_out, src_mask=x_mark_enc, is_causal=False)
         dec_out = self.projection(enc_out)
 

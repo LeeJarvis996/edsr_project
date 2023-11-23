@@ -22,14 +22,6 @@ import copy
 class ConvLayer(Cell):
     def __init__(self, c_in):
         super(ConvLayer, self).__init__()
-        # self.downConv = nn.Conv1d(in_channels=c_in,
-        #                           out_channels=c_in,
-        #                           kernel_size=3,
-        #                           padding=2,
-        #                           padding_mode='circular')
-        # self.norm = nn.BatchNorm1d(c_in)
-        # self.activation = nn.ELU()
-        # self.maxPool = nn.MaxPool1d(kernel_size=3, stride=2, padding=1)
         self.downConv = mindspore.nn.Conv1d(in_channels=c_in, out_channels=c_in, kernel_size=3, padding=2, pad_mode = 'pad',
                                             has_bias=True)
         self.norm = mindspore.nn.BatchNorm1d(c_in)
@@ -104,8 +96,6 @@ class InformerDecoderLayer(Cell):
             y = self.dropout3(self.activation(self.conv1(y.transpose(0, 2, 1))))
             y = self.dropout3(self.conv2(y).transpose(0, 2, 1))
 
-        #     x = self.norm3(x + self._ff_block(x))
-        # return x
         return self.norm3(x + y)
 
     def _sa_block(self, x, attn_mask, key_padding_mask, is_causal):
@@ -178,8 +168,6 @@ class InformerEncoderLayer(Cell):
         self.dropout1 = Dropout(p=dropout)
         self.dropout2 = Dropout(p=dropout)
         self.dropout3 = Dropout(p=dropout)
-        # self.linear1 = _Linear(d_model, dim_feedforward)
-        # self.linear2 = _Linear(dim_feedforward, d_model)
         self.norm_first = norm_first
 
         if not isinstance(activation, str) and not isinstance(activation, Cell) \
@@ -241,8 +229,6 @@ class InformerEncoder(Cell):
     # def __init__(self, encoder_layer, num_layers, norm=None):
     def __init__(self, attn_layers, conv_layers, norm=None):
         super(InformerEncoder, self).__init__()
-        # self.layers = _get_clones(encoder_layer, num_layers)
-        # self.num_layers = num_layers
         self.attn_layers = mindspore.nn.CellList(attn_layers)
         self.conv_layers = mindspore.nn.CellList(conv_layers) if conv_layers is not None else None
         self.norm = norm
@@ -255,11 +241,6 @@ class InformerEncoder(Cell):
                     "only bool and floating types of key_padding_mask are supported")
         output = src
         src_key_padding_mask_for_layers = src_key_padding_mask
-        # for i, mod in enumerate(self.layers[:-1]):
-        #     output = mod(output, src_mask=src_mask, src_key_padding_mask=src_key_padding_mask_for_layers, is_causal = is_causal)
-        #     output = ConvLayer(output)
-        # output = self.layers[-1](output, src_mask=src_mask, src_key_padding_mask=src_key_padding_mask_for_layers,
-        #              is_causal=is_causal)
 
         for i, (attn_layer, conv_layer) in enumerate(zip(self.attn_layers, self.conv_layers)):
             output = attn_layer(output, src_mask=src_mask, src_key_padding_mask=src_key_padding_mask_for_layers, is_causal = is_causal)
@@ -294,7 +275,6 @@ class Informer(Cell):
         conv_layer = [
                     ConvLayer(args.d_model) for l in range(args.e_layers - 1)] if args.distil and ('forecast' in args.task_name) else None
         encoder_norm = LayerNorm((args.d_model,), epsilon=layer_norm_eps)
-        # self.encoder = InformerEncoder(encoder_layer, args.e_layers, encoder_norm)
         self.encoder = InformerEncoder(encoder_layer, conv_layer, encoder_norm)
 
         self.dec_embedding = DataEmbedding(args.dec_in, args.d_model, args.embed, args.freq, args.dropout)

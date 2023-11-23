@@ -12,19 +12,15 @@ class EncoderLayer(Cell):
     """
     Autoformer encoder layer with the progressive decomposition architecture
     """
-
     def __init__(self, attention, d_model, d_ff=None, moving_avg=25, dropout=0.1, activation="relu"):
         super(EncoderLayer, self).__init__()
         d_ff = d_ff or 4 * d_model
         self.attention = attention
-        # self.conv1 = nn.Conv1d(in_channels=d_model, out_channels=d_ff, kernel_size=1, bias=False)
-        # self.conv2 = nn.Conv1d(in_channels=d_ff, out_channels=d_model, kernel_size=1, bias=False)
         self.conv1 = mindspore.nn.Conv1d(in_channels=d_model, out_channels=d_ff, kernel_size=1, has_bias = False)
         self.conv2 = mindspore.nn.Conv1d(in_channels=d_ff, out_channels=d_model, kernel_size=1, has_bias = False)
 
         self.decomp1 = series_decomp(moving_avg)
         self.decomp2 = series_decomp(moving_avg)
-        # self.dropout = nn.Dropout(dropout)
         self.dropout = Dropout(p=dropout)
         self.activation = ops.relu if activation == "relu" else ops.gelu
 
@@ -48,8 +44,6 @@ class Encoder(Cell):
     """
     def __init__(self, attn_layers, conv_layers=None, norm_layer=None):
         super(Encoder, self).__init__()
-        # self.attn_layers = nn.ModuleList(attn_layers)
-        # self.conv_layers = nn.ModuleList(conv_layers) if conv_layers is not None else None
         self.attn_layers = mindspore.nn.CellList(attn_layers)
         self.conv_layers = mindspore.nn.CellList(conv_layers) if conv_layers is not None else None
         self.norm = norm_layer
@@ -113,14 +107,11 @@ class DecoderLayer(Cell):
         self.decomp1 = series_decomp(moving_avg)
         self.decomp2 = series_decomp(moving_avg)
         self.decomp3 = series_decomp(moving_avg)
-        # self.dropout = nn.Dropout(dropout)
         self.dropout = Dropout(p=dropout)
 
-        # self.projection = nn.Conv1d(in_channels=d_model, out_channels=c_out, kernel_size=3, stride=1, padding=1,
-        #                             padding_mode='circular', bias=False)
+
         self.projection = mindspore.nn.Conv1d(in_channels=d_model, out_channels=c_out, kernel_size=3, stride=1, padding=1,
                                     pad_mode='pad', has_bias=False)
-        # self.activation = F.relu if activation == "relu" else F.gelu
         self.activation = ops.relu if activation == "relu" else ops.gelu
 
 
@@ -213,20 +204,11 @@ class Autoformer(Cell):
 
 
     def forecast(self, x_enc, x_mark_enc, x_dec, x_mark_dec):
-        # mean = torch.mean(x_enc, dim=1).unsqueeze(
-        #     1).repeat(1, self.pred_len, 1)
         mean = mindspore.numpy.tile(ops.ExpandDims()(ops.mean(x_enc, axis=1), 1), (1, self.pred_len, 1))
-        # zeros = torch.zeros([x_dec.shape[0], self.pred_len,
-        #                      x_dec.shape[2]], device=x_enc.device)
-        # zeros = ops.Zeros([x_dec.shape[0], self.pred_len, x_dec.shape[2]])
         zeros = ops.zeros((x_dec.shape[0], self.pred_len, x_dec.shape[2]))
         seasonal_init, trend_init = self.decomp(x_enc)
 
         # decoder input
-        # trend_init = torch.cat(
-        #     [trend_init[:, -self.label_len:, :], mean], dim=1)
-        # seasonal_init = torch.cat(
-        #     [seasonal_init[:, -self.label_len:, :], zeros], dim=1)
         trend_init = ops.concat([trend_init[:, -self.label_len:, :], mean.astype('Float32')], 1)
         seasonal_init = ops.concat([seasonal_init[:, -self.label_len:, :].astype('Float32'), zeros], 1)
 
@@ -255,11 +237,9 @@ class my_Layernorm(Cell):
     """
     def __init__(self, channels):
         super(my_Layernorm, self).__init__()
-        # self.layernorm = nn.LayerNorm(channels)
         self.layernorm = mindspore.nn.LayerNorm((channels,))
     def construct(self, x):
         x_hat = self.layernorm(x)
-        # bias = torch.mean(x_hat, dim=1).unsqueeze(1).repeat(1, x.shape[1], 1)
         bias = mindspore.numpy.tile(ops.ExpandDims()(ops.mean(x_hat, axis=1), 1), (1, x.shape[1], 1))
         return x_hat - bias
 

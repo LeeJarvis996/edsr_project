@@ -12,7 +12,6 @@ from layer.etsformer_attn import Transform, GrowthLayer, FourierLayer, LevelLaye
 class Encoder(Cell):
     def __init__(self, layers):
         super().__init__()
-        # self.layers = nn.ModuleList(layers)
         self.layers = mindspore.nn.CellList(layers)
 
     def construct(self, res, level, attn_mask=None):
@@ -45,8 +44,6 @@ class EncoderLayer(Cell):
 
         # Implementation of Feedforward model
         self.ff = Feedforward(d_model, dim_feedforward, dropout=dropout, activation=activation)
-        # self.norm1 = nn.LayerNorm(d_model, eps=layer_norm_eps)
-        # self.norm2 = nn.LayerNorm(d_model, eps=layer_norm_eps)
         self.norm1 = mindspore.nn.LayerNorm((d_model,), epsilon=layer_norm_eps)
         self.norm2 = mindspore.nn.LayerNorm((d_model,), epsilon=layer_norm_eps)
 
@@ -168,11 +165,8 @@ class Etsformer(Cell):
     def forecast(self, x_enc, x_mark_enc, x_dec, x_mark_dec):
         if self.training:
             x_enc = self.transform.transform(x_enc)
-        # print("enc_embedding")
         res = self.enc_embedding(x_enc, x_mark_enc)
-        # print("encoder")
         level, growths, seasons = self.encoder(res, x_enc, attn_mask=None)
-        # print("decoder")
         growth, season = self.decoder(growths, seasons)
         preds = level[:, -1:] + growth + season
         return preds
