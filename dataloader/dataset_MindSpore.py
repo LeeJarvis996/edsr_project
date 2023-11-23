@@ -178,9 +178,6 @@ class MyIterable:
         return self
 
     def __len__(self):
-        # print("self.data_x",len(self.data_x))
-        # print("self.seq_len", self.seq_len)
-        # print("self.pred_len",  self.pred_len)
         return (len(self.data_x) - self.seq_len - self.pred_len + 1) // self.batch_size
 
 

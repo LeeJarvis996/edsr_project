@@ -81,7 +81,6 @@ class Exp_Short_Term_Forecast(Exp_Basic):
                 dec_inp = mindspore.ops.cat([batch_y[:, :self.args.label_len, :], dec_inp], axis=1)
 
                 self.model.set_train()
-                # optimizer = nn.SGD(model.trainable_params(), learning_rate=args.learning_rate)
                 grad_fn = value_and_grad(self.forward_fn, grad_position=None,
                                          weights=self._select_optimizer().parameters, has_aux=True)
                 (loss, _), grads = grad_fn(batch_x, dec_inp, batch_x_mark, batch_y_mark, batch_y)
@@ -122,29 +121,19 @@ class Exp_Short_Term_Forecast(Exp_Basic):
         x = Tensor(x, dtype=mindspore.float32)
         x = ops.ExpandDims()(x, -1)
         B, _, C = x.shape
-        # dec_inp = torch.zeros((B, self.args.pred_len, C)).float().to(self.device)
-        # dec_inp = torch.cat([x[:, -self.args.label_len:, :], dec_inp], dim=1).float()
         dec_inp = ops.zeros((B, self.args.pred_len, C), dtype=mindspore.float32)
         dec_inp = ops.concat([x[:, -self.args.label_len:, :], dec_inp], 1)
         # encoder - decoder
-        # outputs = torch.zeros((B, self.args.pred_len, C)).float()  # .to(self.device)
-        # print(self.args.pred_len)   # 18
         outputs = ops.zeros((B, self.args.pred_len, C), dtype=mindspore.float32)
         id_list = np.arange(0, B, 500)  # validation set size
         id_list = np.append(id_list, B)
         for i in range(len(id_list) - 1):
-            # print(self.model(x[Tensor(id_list[i]):Tensor(id_list[i + 1])], None,
-            #                                                       dec_inp[Tensor(id_list[i]):Tensor(id_list[i + 1])],
-            #                                                       None).shape)  # (500, 36, 1)
-            # print(outputs[Tensor(id_list[i]):Tensor(id_list[i + 1]), :, :].shape)   # (500, 18, 1)
             outputs[Tensor(id_list[i]):Tensor(id_list[i + 1]), :, :] = Parameter(self.model(x[Tensor(id_list[i]):Tensor(id_list[i + 1])], None,
                                                                   dec_inp[Tensor(id_list[i]):Tensor(id_list[i + 1])],
                                                                   None), requires_grad=False)
         f_dim = -1 if self.args.features == 'MS' else 0
         outputs = outputs[:, -self.args.pred_len:, f_dim:]
         pred = outputs
-        # true = torch.from_numpy(np.array(y))
-        # batch_y_mark = torch.ones(true.shape)
         true = Tensor(np.array(y))
         batch_y_mark = ops.ones(true.shape, dtype=mindspore.float32)
         x = Parameter(x, requires_grad=False)
@@ -173,21 +162,15 @@ class Exp_Short_Term_Forecast(Exp_Basic):
         #     os.makedirs(folder_path)
 
         B, _, C = x.shape
-        # dec_inp = torch.zeros((B, self.args.pred_len, C)).float().to(self.device)
-        # dec_inp = torch.cat([x[:, -self.args.label_len:, :], dec_inp], dim=1).float()
         dec_inp = ops.zeros((B, self.args.pred_len, C), dtype=mindspore.float32)
         dec_inp = ops.concat([x[:, -self.args.label_len:, :], dec_inp], 1)
 
         # encoder - decoder
-        # outputs = torch.zeros((B, self.args.pred_len, C)).float().to(self.device)
         outputs = ops.zeros((B, self.args.pred_len, C), dtype=mindspore.float32)
         id_list = np.arange(0, B, 1)
         id_list = np.append(id_list, B)
 
         for i in range(len(id_list) - 1):
-            # outputs[Tensor(id_list[i]):Tensor(id_list[i + 1]), :, :] = self.model(x[Tensor(id_list[i]):Tensor(id_list[i + 1])], None,
-            #                                                       dec_inp[Tensor(id_list[i]):Tensor(id_list[i + 1])], None)
-
             outputs[Tensor(id_list[i]):Tensor(id_list[i + 1]), :, :] = Parameter(self.model(x[Tensor(id_list[i]):Tensor(id_list[i + 1])], None,
                                                                   dec_inp[Tensor(id_list[i]):Tensor(id_list[i + 1])],
                                                                   None), requires_grad=False)
@@ -197,18 +180,10 @@ class Exp_Short_Term_Forecast(Exp_Basic):
 
         f_dim = -1 if self.args.features == 'MS' else 0
         outputs = outputs[:, -self.args.pred_len:, f_dim:]
-        # outputs = outputs.detach().cpu().numpy()
         outputs = Parameter(outputs, requires_grad=False).asnumpy()
 
         preds = outputs
-        trues = y
-        # x = x.detach().cpu().numpy()
         x = Parameter(x, requires_grad=False).asnumpy()
-
-        # for i in range(0, preds.shape[0], preds.shape[0] // 10):
-        #     gt = np.concatenate((x[i, :, 0], trues[i]), axis=0)
-        #     pd = np.concatenate((x[i, :, 0], preds[i, :, 0]), axis=0)
-        #     visual(gt, pd, os.path.join(folder_path, str(i) + '.pdf'))
 
         print('test shape:', preds.shape)
 
