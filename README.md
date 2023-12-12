@@ -33,6 +33,7 @@ Great thanks to [TSlib](https://github.com/thuml/Time-Series-Library/tree/main).
 ├── model     		 # Framework of the models.
 ├── results          # Results.
 ├── utils            # Other functions.
+├── EDSR             # The implementation of Effective Data Selection and Replay for Unsupervised Continual Learning (EDSR).
 ├── exp_.py          # Main function 
 └── README.md
 ```
